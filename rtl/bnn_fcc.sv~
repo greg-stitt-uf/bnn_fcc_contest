@@ -1,0 +1,259 @@
+// Layer 0 (F[0] inputs per neuron):
+//   Neuron 0: W0,0 ... W0,F[0]-1 | Threshold0
+//   Neuron 1: W1,0 ... W1,F[0]-1 | Threshold1
+//   ...
+//   Neuron N[0]-1: ...           | ThresholdN[0]-1
+
+// Layer 1 (F[1] inputs per neuron):
+//   Neuron 0: W0,0 ... W0,F[1]-1 | Threshold0
+//   Neuron 1: W1,0 ... W1,F[1]-1 | Threshold1
+//   ...
+
+module bnn_fcc #(
+    parameter int INPUT_DATA_WIDTH  = 16,
+    parameter int INPUT_BUS_WIDTH   = 32,
+    parameter int CONFIG_BUS_WIDTH  = 32,
+    parameter int OUTPUT_DATA_WIDTH = 4,
+    parameter int OUTPUT_BUS_WIDTH  = 8,
+
+    parameter int TOTAL_LAYERS = 4,  // Includes input, hidden, and output
+    parameter int TOPOLOGY[TOTAL_LAYERS] = '{0: 784, 1: 256, 2: 256, 3: 10, default: 0},  // 0: input, TOTAL_LAYERS-1: output
+
+    parameter bit PARALLELIZE_LAYERS = 1'b0,
+    parameter int PARALLEL_NEURONS   = 1,
+    parameter int PARALLEL_INPUTS    = 32
+) (
+    input logic clk,
+    input logic rst,
+
+    // AXI streaming configuration interface (consumer)
+    input  logic                          config_valid,
+    output logic                          config_ready,
+    input  logic [  CONFIG_BUS_WIDTH-1:0] config_data,
+    input  logic [CONFIG_BUS_WIDTH/8-1:0] config_keep,
+    input  logic                          config_last,
+
+    // AXI streaming image input interface (consumer)
+    input  logic                         data_in_valid,
+    output logic                         data_in_ready,
+    input  logic [  INPUT_BUS_WIDTH-1:0] data_in_data,
+    input  logic [INPUT_BUS_WIDTH/8-1:0] data_in_keep,
+    input  logic                         data_in_last,
+
+    // AXI streaming classification output interface (producer)
+    output logic                          data_out_valid,
+    input  logic                          data_out_ready,
+    output logic [  OUTPUT_BUS_WIDTH-1:0] data_out_data,
+    output logic [OUTPUT_BUS_WIDTH/8-1:0] data_out_keep,
+    output logic                          data_out_last
+);
+    localparam int LAYERS = TOTAL_LAYERS - 1;
+    typedef int layer_int_array_t[LAYERS];
+
+    function automatic int get_max_inputs(bit pad);
+        int m = -1;
+        for (int i = 0; i < LAYERS; i++) m = m > TOPOLOGY[i] ? m : TOPOLOGY[i];
+
+        // Round up to next multiple of PARALLEL_INPUTS
+        if (pad) return int'($ceil(m / real'(PARALLEL_INPUTS)) * PARALLEL_INPUTS);
+        else return m;
+    endfunction
+
+    function automatic int get_max_neurons(bit pad);
+        int m = -1;
+        for (int i = 1; i < TOTAL_LAYERS; i++) m = m > TOPOLOGY[i] ? m : TOPOLOGY[i];
+
+        if (pad) return int'($ceil(m / real'(PARALLEL_NEURONS)) * PARALLEL_NEURONS);
+        else return m;
+    endfunction
+
+    function automatic layer_int_array_t get_layer_inputs(bit pad);
+        layer_int_array_t inputs;
+        for (int i = 0; i < LAYERS; i++) begin
+            if (pad) inputs[i] = int'($ceil(TOPOLOGY[i] / real'(PARALLEL_INPUTS)) * PARALLEL_INPUTS);
+            else inputs[i] = TOPOLOGY[i];
+        end
+        return inputs;
+    endfunction
+
+    function automatic layer_int_array_t get_layer_neurons(bit pad);
+        layer_int_array_t inputs;
+        for (int i = 0; i < LAYERS; i++) begin
+            if (pad) inputs[i] = int'($ceil(TOPOLOGY[i+1] / real'(PARALLEL_INPUTS)) * PARALLEL_INPUTS);
+            else inputs[i] = TOPOLOGY[i+1];
+        end
+        return inputs;
+    endfunction
+
+    //localparam int NUM_WEIGHTS_PADDED[LAYERS] = get_padded_weight_amounts();
+    //localparam int NEURONS_PER_MEMORY[LAYERS] = get_neurons_per_memory();
+
+    localparam int MAX_INPUTS_ACTUAL = get_max_inputs(1'b0);
+    localparam int MAX_INPUTS_PADDED = get_max_inputs(1'b1);
+    localparam int MAX_NEURONS_ACTUAL = get_max_neurons(1'b0);
+    localparam int MAX_NEURONS_PADDED = get_max_neurons(1'b1);
+    localparam layer_int_array_t LAYER_INPUTS_ACTUAL = get_layer_inputs(1'b0);
+    localparam layer_int_array_t LAYER_NEURONS_ACTUAL = get_layer_neurons(1'b0);
+    localparam layer_int_array_t LAYER_INPUTS_PADDED = get_layer_inputs(1'b1);
+    localparam layer_int_array_t LAYER_NEURONS_PADDED = get_layer_neurons(1'b1);
+
+    //localparam int MAX_WEIGHT_BEATS = int'($ceil(MAX_INPUTS_PADDED / real'(PARALLEL_INPUTS)));
+    //localparam int NEURONS_PER_RAM = int'($ceil(MAX_NEURONS_PADDED / real'(PARALLEL_NEURONS)));
+
+    function automatic layer_int_array_t get_weight_beats();
+        layer_int_array_t x;
+        // num_weights_padded[l] = ceil(num_weights[l] / PARALLEL_INPUTS) * PARALLEL_INPUTS;        
+        for (int i = 0; i < LAYERS; i++) x[i] = $ceil(LAYER_INPUTS_ACTUAL[i] / real'(PARALLEL_INPUTS)) * PARALLEL_INPUTS;
+        return x;
+    endfunction
+
+    function automatic layer_int_array_t get_neurons_per_ram();
+        layer_int_array_t x;
+        // neurons_per_memory[l] = ceil(num_neurons[l] / PARALLEL_NEURONS) * PARALLEL_NEURONS;        
+        for (int i = 0; i < LAYERS; i++) x[i] = $ceil(LAYER_NEURONS_ACTUAL[i] / real'(PARALLEL_NEURONS)) * PARALLEL_NEURONS;
+        return x;
+    endfunction
+
+    localparam layer_int_array_t WEIGHT_BEATS = get_weight_beats();
+    localparam layer_int_array_t NEURONS_PER_RAM = get_neurons_per_ram();
+
+    function automatic layer_int_array_t get_layer_start_addr();
+        layer_int_array_t x;
+        // layer_start_addr[l] = layer_start_addr[l-1] + neurons_per_memory[l] * num_weights_padded[l]
+        x[0] = 0;
+        for (int i = 1; i < LAYERS; i++) x[i] = x[i-1] + NEURONS_PER_RAM[i-1] * LAYER_INPUTS_PADDED[i-1];
+        return x;
+    endfunction
+
+    localparam layer_int_array_t LAYER_START_ADDR = get_layer_start_addr();
+    localparam int TOTAL_WEIGHT_ADDR = LAYER_START_ADDR[LAYERS-1] + NEURONS_PER_RAM[LAYERS-1] * LAYER_INPUTS_PADDED[LAYERS-1];
+    localparam int WEIGHT_ADDR_WIDTH = $clog2(TOTAL_WEIGHT_ADDR);
+    localparam int THRESHOLD_ADDR_WIDTH = $clog2(NEURONS_PER_RAM[0]);
+    localparam int THRESHOLD_DATA_WIDTH = $clog2(MAX_INPUTS_PADDED + 1);
+
+    logic [  PARALLEL_INPUTS-1:0] weight_ram_rd_data;
+    logic [WEIGHT_ADDR_WIDTH-1:0] weight_ram_rd_addr;
+    logic [ PARALLEL_NEURONS-1:0] weight_ram_rd_en;
+    logic [  PARALLEL_INPUTS-1:0] weight_ram_wr_data;
+    logic [WEIGHT_ADDR_WIDTH-1:0] weight_ram_wr_addr;
+    logic [ PARALLEL_NEURONS-1:0] weight_ram_wr_en;
+
+    logic [THRESHOLD_DATA_WIDTH-1:0] threshold_ram_wr_data;
+    logic [THRESHOLD_ADDR_WIDTH-1:0] threshold_ram_wr_addr;
+    logic [    PARALLEL_NEURONS-1:0] threshold_ram_wr_en;
+
+    localparam int IO_FIFO_DEPTH = 1 << $clog2(MAX_INPUTS_PADDED);
+    logic                       io_fifo_full;
+    logic                       io_fifo_wr_en;
+    logic [PARALLEL_INPUTS-1:0] io_fifo_wr_data;
+    logic                       io_fifo_empty;
+    logic                       io_fifo_rd_en;
+    logic [PARALLEL_INPUTS-1:0] io_fifo_rd_data;
+
+    // Should work, but the interface has tasks that can drive these signals.
+    // SV doesn't allow procedural and continuous assignments to the same signal (i.e. multiple drivers)
+    // Even though the tasks (procedural assignments) aren't called, SV treats tasks in an interface
+    // as being called, even when they aren't.
+
+    //assign config_in.tready = 1'b1;
+    //assign data_in.tready = 1'b1;
+
+    // Workaround: just use procedural assignments for interface signals.
+    always_comb begin
+        //config_ready = 1'b1;
+        data_in_ready = 1'b1;
+    end
+
+    config_manager_shared #(
+        .BUS_WIDTH        (INPUT_BUS_WIDTH),
+        .MAX_INPUTS       (MAX_INPUTS_PADDED),
+        .MAX_NEURONS      (MAX_NEURONS_PADDED),
+        .LAYERS           (LAYERS),
+        .LAYER_INPUTS     (LAYER_INPUTS_PADDED),
+        .LAYER_NEURONS    (LAYER_NEURONS_PADDED),
+        .WEIGHT_ADDR_WIDTH(WEIGHT_ADDR_WIDTH),
+        .PARALLEL_NEURONS (PARALLEL_NEURONS),
+        .PARALLEL_INPUTS  (PARALLEL_INPUTS)
+
+    ) config_manager (
+        .clk                  (clk),
+        .rst                  (rst),
+        .config_data_in       (config_data),
+        .config_valid         (config_valid),
+        .config_keep          (config_keep),
+        .config_last          (config_last),
+        .config_ready         (config_ready),
+        .weight_ram_wr_data   (weight_ram_wr_data),
+        .weight_ram_wr_addr   (weight_ram_wr_addr),
+        .weight_ram_wr_en     (weight_ram_wr_en),
+        .threshold_ram_wr_data(threshold_ram_wr_data),
+        .threshold_ram_wr_addr(threshold_ram_wr_addr),
+        .threshold_ram_wr_en  (threshold_ram_wr_en)
+    );
+
+    assign weight_ram_rd_en = 1'b1;
+
+    for (genvar i = 0; i < PARALLEL_NEURONS; i++) begin : l_weight_rams
+        ram_sdp #(
+            .DATA_WIDTH (PARALLEL_INPUTS),
+            .ADDR_WIDTH (WEIGHT_ADDR_WIDTH),
+            .REG_RD_DATA(1'b0),
+            .WRITE_FIRST(1'b0),
+            .STYLE      ("block")
+        ) weight_ram (
+            .clk    (clk),
+            .rd_en  (weight_ram_rd_en),
+            .rd_addr(weight_ram_rd_addr),
+            .rd_data(weight_ram_rd_data),
+            .wr_en  (weight_ram_wr_en[i]),
+            .wr_addr(weight_ram_wr_addr),
+            .wr_data(weight_ram_wr_data)
+        );
+    end
+
+    fifo #(
+        .WIDTH(PARALLEL_INPUTS),
+        .DEPTH(IO_FIFO_DEPTH),
+        .STYLE("auto")
+    ) io_fifo (
+        .clk         (clk),
+        .rst         (rst),
+        .full        (io_fifo_full),
+        .almost_full (),
+        .wr_en       (io_fifo_wr_en),
+        .wr_data     (io_fifo_wr_data),
+        .empty       (io_fifo_empty),
+        .almost_empty(),
+        .rd_en       (io_fifo_rd_en),
+        .rd_data     (io_fifo_rd_data),
+        .count       ()
+    );
+
+    // Width-changing FIFO
+    // Convert width from INPUTS_PER_CYCLE to PARALLEL_NEURON_INPUTS
+    // Write port connect to inputs, read port connected to I/O RAM.
+
+
+
+    // RAM that stores the input and output of each layer, in addition to the original inputs
+    // At any given time this RAM contains I/O for exactly one layer. When that layer is done computing,
+    // the output becomes the inputs. The upper address bit is used to swap the functionality. e.g., 
+    // initially MSB=0 store inputs and MSB=1 stores outputs. For the next layer, MSB=1 provides the inputs
+    // and MSB=0 store the new outputs, etc.
+    // Depth = max(NUM_INPUTS / PARALLEL_NEURON_INPUTS, MAX_LAYER_INPUTS / PARALLEL_NEURON_INPUTS)
+    // Width = PARALLEL_NEURON_INPUTS
+
+
+
+    // Separate weight RAM for each parallel neuron
+    // This RAM stores weights for each neuron in each layer. Each RAM provides PARALLEL_NEURON_INPUTS weights
+    // each cycle, where each adjacent address corresponds to the next set of PARALLEL_NEURON_INPUTS weights
+    // for the current neuron. After completing all of a neuron's weights, the next weights start over for
+    // neuron i + PARALLEL_NEURON_WEIGHTS. Finally, after all neuron's in the current layer have been processed,
+    // the next address corresponds to weights for a neuron in the next layer. Basically, each RAM i provides a stream
+    // of weights across layers needed by all neurons x where x % PARALLEL_NEURONS == i.
+
+
+
+
+endmodule
