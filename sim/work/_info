@@ -11,24 +11,24 @@ cModel Technology
 dC:/Users/sreer/School/Spring_2026/RCII/lab1-SreeraaghavRaja-22/sim
 vneuron
 Z0 DXx6 sv_std 3 std 0 22 VYECXdT12H8WgbUP_5Y6:3
-!s110 1771720042
+!s110 1771721331
 !i10b 1
-!s100 PRlbzSl:OP?Q1lGk0[``j0
+!s100 <_DeHa?@b6j@e^@ooYP0M0
 Z1 !s11b Dg1SIo80bB@j0V0VzS_@n1
-I73nOJgG<LCYck>GXiBeNP3
+IkgZXBG882PUFMO?RUS2NR3
 Z2 VDg1SIo80bB@j0V0VzS_@n1
 S1
 Z3 dC:/Users/sreer/School/Spring_2026/bnn_fcc_contest/sim
-w1771719888
+w1771720520
 8C:/Users/sreer/School/Spring_2026/bnn_fcc_contest/rtl/neuron.sv
 FC:/Users/sreer/School/Spring_2026/bnn_fcc_contest/rtl/neuron.sv
-!i122 15
-L0 1 57
+!i122 18
+L0 1 56
 Z4 OV;L;2020.1;71
 r1
 !s85 0
 31
-!s108 1771720042.000000
+!s108 1771721331.000000
 !s107 C:/Users/sreer/School/Spring_2026/bnn_fcc_contest/rtl/neuron.sv|
 !s90 -reportprogress|300|-work|work|-sv|-stats=none|C:/Users/sreer/School/Spring_2026/bnn_fcc_contest/rtl/neuron.sv|
 !i113 1
