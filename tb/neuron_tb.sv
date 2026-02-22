@@ -3,14 +3,16 @@
 module neuron_tb #(parameter int NUM_TESTS = 10000
 );
     localparam int NUM_WEIGHTS = 4, NUM_INPUTS = 4;
-    localparam int THRESHOLD_BITS = 1; 
-    logic clk = 1'b0, reset, en, valid_in;
+    localparam int THRESHOLD_BITS = 3; 
+    logic clk = 1'b0, rst, valid_in;
     logic [NUM_WEIGHTS-1:0] w, x;
     logic [$clog2(NUM_WEIGHTS+1)-1:0] y; 
     logic valid_out; 
 
 
-    neuron(.NUM_WEIGHTS(NUM_WEIGHTS), .NUM_INPUTS(NUM_INPUTS), .THRESHOLD_BITS(THRESHOLD_BITS))(.*);
+    neuron #(.NUM_WEIGHTS(NUM_WEIGHTS), .NUM_INPUTS(NUM_INPUTS), .THRESHOLD_BITS(THRESHOLD_BITS)) DUT (
+        .en(1'b1),
+        .*);
 
 
     initial begin : generate_clk
@@ -21,19 +23,25 @@ module neuron_tb #(parameter int NUM_TESTS = 10000
         rst <= 1'b1; 
         x <= '0; 
         w <= '0; 
-        en <=  1'b0; 
+        valid_in <= 1'b0;
         repeat(10) @(posedge clk); 
         @(negedge clk);
+        rst <= 1'b0;
         repeat(5) @(posedge clk);
 
         for(int i = 0; i < NUM_TESTS; i++) begin 
             x <= $urandom; 
             w <= $urandom; 
-            en <= 1'b1; 
+            valid_in <= 1'b1; 
             
+            repeat(4) @(posedge clk);
+            valid_in <= 1'b0; 
             @(posedge clk);
 
-            $display("Test %b: The values are x = %0b, w = %0b, y = %b\n", i, x, w, y);
+            $display("Test %d: The values are x = %b, w = %b, y = %b\n", i, x, w, y);
         end
+
+        $display("Tests Completed!!");
+        disable generate_clk; 
     end
 endmodule

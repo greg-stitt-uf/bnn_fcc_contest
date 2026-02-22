@@ -1,7 +1,7 @@
 module neuron #(
 	parameter NUM_WEIGHTS = 4,
-	parameter NUM_INPUTS = 4,
-	parameter THRESHOLD_BITS = 3
+	parameter NUM_INPUTS = 4, 
+	parameter int THRESHOLD_BITS = 4
 )
 (
 	input logic clk, 
@@ -10,7 +10,6 @@ module neuron #(
 	input logic valid_in,
 	input logic [NUM_WEIGHTS-1:0] w,
 	input logic [NUM_INPUTS-1:0] x,
-	input logic [THRESHOLD_BITS-1:0] threshold,
 	output logic [$clog2(NUM_WEIGHTS+1)-1:0] y,
 	output logic valid_out
 );
@@ -31,10 +30,9 @@ module neuron #(
 			valid_r <= 1'b0; 
 			valid_r2 <= 1'b0; 
 			valid_r3 <= 1'b0;
-		end else if (en) begin
-
+		end else if (en) begin 
 			/* Stage 1 */
-			xnor_out_r <= x ^~ w; 
+			xnor_out_r <= x ~^ w; 
 			valid_r <= valid_in; 
 
 			/* Stage 2 */
@@ -42,7 +40,7 @@ module neuron #(
 			valid_r2 <= valid_r; 
 
 			/* Stage 3 */
-			if(count_ones_out_r >= threshold) begin 
+			if(count_ones_out_r >= THRESHOLD_BITS) begin 
 				y_r <= count_ones_out_r;
 			end else begin 
 				y_r <= '0; 
