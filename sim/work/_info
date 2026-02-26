@@ -11,51 +11,51 @@ cModel Technology
 dC:/Users/sreer/School/Spring_2026/RCII/lab1-SreeraaghavRaja-22/sim
 vneuron
 Z0 DXx6 sv_std 3 std 0 22 VYECXdT12H8WgbUP_5Y6:3
-!s110 1771721331
+Z1 !s110 1772137834
 !i10b 1
-!s100 <_DeHa?@b6j@e^@ooYP0M0
-Z1 !s11b Dg1SIo80bB@j0V0VzS_@n1
-IkgZXBG882PUFMO?RUS2NR3
-Z2 VDg1SIo80bB@j0V0VzS_@n1
+!s100 HMQIY_G:Nc@?D=[?3N2e03
+Z2 !s11b Dg1SIo80bB@j0V0VzS_@n1
+I@KcmlLl=NSmQ]bE9QJ>FP1
+Z3 VDg1SIo80bB@j0V0VzS_@n1
 S1
-Z3 dC:/Users/sreer/School/Spring_2026/bnn_fcc_contest/sim
-w1771720520
+Z4 dC:/Users/sreer/School/Spring_2026/bnn_fcc_contest/sim
+Z5 w1772137810
 8C:/Users/sreer/School/Spring_2026/bnn_fcc_contest/rtl/neuron.sv
 FC:/Users/sreer/School/Spring_2026/bnn_fcc_contest/rtl/neuron.sv
-!i122 18
-L0 1 56
-Z4 OV;L;2020.1;71
+!i122 20
+L0 1 69
+Z6 OV;L;2020.1;71
 r1
 !s85 0
 31
-!s108 1771721331.000000
+Z7 !s108 1772137834.000000
 !s107 C:/Users/sreer/School/Spring_2026/bnn_fcc_contest/rtl/neuron.sv|
 !s90 -reportprogress|300|-work|work|-sv|-stats=none|C:/Users/sreer/School/Spring_2026/bnn_fcc_contest/rtl/neuron.sv|
 !i113 1
-Z5 o-work work -sv
-Z6 tCvgOpt 0
+Z8 o-work work -sv
+Z9 tCvgOpt 0
 vneuron_tb
 R0
-!s110 1771720314
-!i10b 1
-!s100 if8KcCWeciC]<HJiT:<e`3
 R1
-IRVYaA?6ITiNnhVF1OmO>81
+!i10b 1
+!s100 ^jlDlz;a6^]O5>onmZ0<N0
 R2
-S1
+IEdT:NFkWzACbSB_T@kV^m3
 R3
-w1771720308
-8C:/Users/sreer/School/Spring_2026/bnn_fcc_contest/tb/neuron_tb.sv
-FC:/Users/sreer/School/Spring_2026/bnn_fcc_contest/tb/neuron_tb.sv
-!i122 17
-L0 3 45
+S1
 R4
+R5
+8C:/Users/sreer/School/Spring_2026/bnn_fcc_contest/verification/neuron_tb.sv
+FC:/Users/sreer/School/Spring_2026/bnn_fcc_contest/verification/neuron_tb.sv
+!i122 21
+L0 3 48
+R6
 r1
 !s85 0
 31
-!s108 1771720314.000000
-!s107 C:/Users/sreer/School/Spring_2026/bnn_fcc_contest/tb/neuron_tb.sv|
-!s90 -reportprogress|300|-work|work|-sv|-stats=none|C:/Users/sreer/School/Spring_2026/bnn_fcc_contest/tb/neuron_tb.sv|
+R7
+!s107 C:/Users/sreer/School/Spring_2026/bnn_fcc_contest/verification/neuron_tb.sv|
+!s90 -reportprogress|300|-work|work|-sv|-stats=none|C:/Users/sreer/School/Spring_2026/bnn_fcc_contest/verification/neuron_tb.sv|
 !i113 1
-R5
-R6
+R8
+R9
