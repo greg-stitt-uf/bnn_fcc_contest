@@ -9,7 +9,6 @@ module neuron #(
     input logic rst, 
     input logic en, 
     input logic valid_in,
-    inout logic [POPCOUNT_WIDTH-1:0] popcount_in,
     input logic [NUM_WEIGHTS-1:0] w,
     input logic [NUM_INPUTS-1:0] x,
     output logic [$clog2(NUM_WEIGHTS+1)-1:0] y,
@@ -19,7 +18,7 @@ module neuron #(
 
     logic [NUM_INPUTS-1:0] xnor_out_r; 
     logic [$clog2(NUM_WEIGHTS+1)-1:0] y_r, count_ones_out_r;
-    logic [31:0] popcount_r; // hardcoding popcount size
+    logic [31:0] popcount_r, accum_r; // hardcoding popcount size
     logic valid_r, valid_r2, valid_r3, valid_r4;
 
     // assign count_ones_out = $countones(xnor_block_out); // popcount
@@ -31,6 +30,7 @@ module neuron #(
             xnor_out_r <= '0; 
             count_ones_out_r <= '0; 
             popcount_r <= '0;
+			accum_r <= '0;
             y_r <= '0; 
             valid_r <= 1'b0; 
             valid_r2 <= 1'b0; 
@@ -46,11 +46,11 @@ module neuron #(
             valid_r2 <= valid_r; 
 
             /* Stage 3 */
-            popcount_r <= count_ones_out_r + popcount_in;
-            valid_r3 <= valid_r2;
-
+            popcount_r <= count_ones_out_r + accum_r;
+			valid_r3 <= valid_r2;
 
             /* Stage 4 */
+			accum_r <= popcount_r;
             if(count_ones_out_r >= THRESHOLD_BITS) begin 
                 y_r <= count_ones_out_r;
             end else begin 
@@ -64,6 +64,6 @@ module neuron #(
     // assign outputs at the end (need the valid signal to check when pipeline is done)
     assign y = y_r;
     assign valid_out = valid_r4;
-    assign popcount_out = popcount_r;
+    assign popcount_out = accum_r;
 
 endmodule
