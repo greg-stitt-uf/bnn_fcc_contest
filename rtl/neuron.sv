@@ -51,7 +51,7 @@ module neuron #(
 
 
             /* Stage 4 */
-            if(count_ones_out_r >= THRESOLD_BITS) begin 
+            if(count_ones_out_r >= THRESHOLD_BITS) begin 
                 y_r <= count_ones_out_r;
             end else begin 
                 y_r <= '0; 

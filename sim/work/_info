@@ -36,26 +36,26 @@ Z5 o-work work -sv
 Z6 tCvgOpt 0
 vneuron_tb
 R0
-!s110 1771720314
+!s110 1772136978
 !i10b 1
-!s100 if8KcCWeciC]<HJiT:<e`3
+!s100 5K0OoX^bbJIQ:kno5gNn@3
 R1
-IRVYaA?6ITiNnhVF1OmO>81
+I<AXY^8oW9KBcJiWV9VZIU0
 R2
 S1
 R3
-w1771720308
-8C:/Users/sreer/School/Spring_2026/bnn_fcc_contest/tb/neuron_tb.sv
-FC:/Users/sreer/School/Spring_2026/bnn_fcc_contest/tb/neuron_tb.sv
-!i122 17
-L0 3 45
+w1772136960
+8C:/Users/sreer/School/Spring_2026/bnn_fcc_contest/verification/neuron_tb.sv
+FC:/Users/sreer/School/Spring_2026/bnn_fcc_contest/verification/neuron_tb.sv
+!i122 19
+L0 3 48
 R4
 r1
 !s85 0
 31
-!s108 1771720314.000000
-!s107 C:/Users/sreer/School/Spring_2026/bnn_fcc_contest/tb/neuron_tb.sv|
-!s90 -reportprogress|300|-work|work|-sv|-stats=none|C:/Users/sreer/School/Spring_2026/bnn_fcc_contest/tb/neuron_tb.sv|
+!s108 1772136978.000000
+!s107 C:/Users/sreer/School/Spring_2026/bnn_fcc_contest/verification/neuron_tb.sv|
+!s90 -reportprogress|300|-work|work|-sv|-stats=none|C:/Users/sreer/School/Spring_2026/bnn_fcc_contest/verification/neuron_tb.sv|
 !i113 1
 R5
 R6
