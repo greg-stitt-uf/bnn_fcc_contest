@@ -16,4 +16,6 @@ module config_manager
     output logic threshold_ram_wr_data,
     output logic threshold_ram_wr_en
 );
+
+    
 endmodule
