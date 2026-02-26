@@ -9,10 +9,11 @@ module neuron #(
     input logic rst, 
     input logic en, 
     input logic valid_in,
-    inout logic [POPCOUNT_WIDTH-1:0] popcount,
+    inout logic [POPCOUNT_WIDTH-1:0] popcount_in,
     input logic [NUM_WEIGHTS-1:0] w,
     input logic [NUM_INPUTS-1:0] x,
     output logic [$clog2(NUM_WEIGHTS+1)-1:0] y,
+	output logic [POPCOUNT_WIDTH-1:0] popcount_out,
     output logic valid_out
 );
 
@@ -45,7 +46,7 @@ module neuron #(
             valid_r2 <= valid_r; 
 
             /* Stage 3 */
-            popcount_r <= count_ones_out_r + popcount;
+            popcount_r <= count_ones_out_r + popcount_in;
             valid_r3 <= valid_r2;
 
 
@@ -63,6 +64,6 @@ module neuron #(
     // assign outputs at the end (need the valid signal to check when pipeline is done)
     assign y = y_r;
     assign valid_out = valid_r4;
-    assign popcount = popcount_r;
+    assign popcount_out = popcount_r;
 
 endmodule

@@ -9,7 +9,7 @@ module neuron_tb #(parameter int NUM_TESTS = 10000
     logic [NUM_WEIGHTS-1:0] w, x;
     logic [$clog2(NUM_WEIGHTS+1)-1:0] y; 
     logic valid_out; 
-    logic [POPCOUNT_WIDTH-1:0] popcount = '0;
+    logic [POPCOUNT_WIDTH-1:0] popcount_in = '0, popcount_out;
 
 
     neuron #(.NUM_WEIGHTS(NUM_WEIGHTS), .NUM_INPUTS(NUM_INPUTS), .THRESHOLD_BITS(THRESHOLD_BITS), .POPCOUNT_WIDTH(POPCOUNT_WIDTH)) DUT (
