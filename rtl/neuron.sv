@@ -11,59 +11,54 @@ module neuron #(
     input logic valid_in,
     input logic [NUM_WEIGHTS-1:0] w,
     input logic [NUM_INPUTS-1:0] x,
-    output logic [$clog2(NUM_WEIGHTS+1)-1:0] y,
-	output logic [POPCOUNT_WIDTH-1:0] popcount_out,
+    output logic y,
+    output logic [POPCOUNT_WIDTH-1:0] popcount_out,
     output logic valid_out
 );
 
+    // Pipeline Registers
     logic [NUM_INPUTS-1:0] xnor_out_r; 
-    logic [$clog2(NUM_WEIGHTS+1)-1:0] y_r, count_ones_out_r;
-    logic [31:0] popcount_r, accum_r; // hardcoding popcount size
-    logic valid_r, valid_r2, valid_r3, valid_r4;
+    logic [$clog2(NUM_WEIGHTS+1)-1:0] count_ones_out_r;
+    logic [POPCOUNT_WIDTH-1:0] accum_r;
+    
+    // Status Registers
+    logic [$clog2(NUM_INPUTS+1)-1:0] input_count_r;
+    logic valid_r1, valid_r2, valid_r3, valid_r4;
+    logic y_r;
 
-    // assign count_ones_out = $countones(xnor_block_out); // popcount
-
-    // adding the inputs and weights done here (pipeline this)
-
-    always_ff @(posedge clk or posedge rst) begin // first implement with a basic pipeline 
+    always_ff @(posedge clk or posedge rst) begin
         if (rst) begin
-            xnor_out_r <= '0; 
+            xnor_out_r       <= '0; 
             count_ones_out_r <= '0; 
-            popcount_r <= '0;
-			accum_r <= '0;
-            y_r <= '0; 
-            valid_r <= 1'b0; 
-            valid_r2 <= 1'b0; 
-            valid_r3 <= 1'b0;
-            valid_r4 <= 1'b0;
+            accum_r          <= '0;
+            input_count_r    <= '0;
+            y_r              <= '0; 
+            valid_r1 <= 1'b0; valid_r2 <= 1'b0; valid_r3 <= 1'b0; valid_r4 <= 1'b0;
         end else if (en) begin 
-            /* Stage 1 */
-            xnor_out_r <= x ~^ w; 
-            valid_r <= valid_in; 
+            /* Stage 1*/ 
+            xnor_out_r <= x ~^ w;
+            valid_r1   <= valid_in; 
 
             /* Stage 2 */
             count_ones_out_r <= $countones(xnor_out_r);
-            valid_r2 <= valid_r; 
+            valid_r2         <= valid_r1; 
 
-            /* Stage 3 */
-            popcount_r <= count_ones_out_r + accum_r;
-			valid_r3 <= valid_r2;
+            /* Stage 3*/
+            if (valid_r2) begin
+                accum_r       <= accum_r + count_ones_out_r;
+                input_count_r <= input_count_r + 1'b1;
+
+            end
+            valid_r3 <= valid_r2;
 
             /* Stage 4 */
-			accum_r <= popcount_r;
-            if(count_ones_out_r >= THRESHOLD_BITS) begin 
-                y_r <= count_ones_out_r;
-            end else begin 
-                y_r <= '0; 
-            end
-
+            y_r <= (input_count_r >= THRESHOLD_BITS) ? 1'b1 : 1'b0;
             valid_r4 <= valid_r3;
         end
     end
 
-    // assign outputs at the end (need the valid signal to check when pipeline is done)
-    assign y = y_r;
-    assign valid_out = valid_r4;
+    assign y            = y_r;
+    assign valid_out    = valid_r4;
     assign popcount_out = accum_r;
 
 endmodule
