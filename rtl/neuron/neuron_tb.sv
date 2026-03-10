@@ -2,6 +2,8 @@ module neuron_tb #(
     parameter int PW = 8
 );
 
+    localparam int OUT_LATENCY = 2;
+
     logic clk = 1'b0;
     logic rst;
     logic [PW-1:0] x;
@@ -33,6 +35,33 @@ module neuron_tb #(
         forever #5 clk = ~clk;
     end
 
+    //TASKS
+    task automatic drive_idle();
+        begin
+            x         <= '0;
+            w         <= '0;
+            threshold <= '0;
+            valid_in  <= 1'b0;
+            last      <= 1'b0;
+        end
+    endtask
+
+    task automatic send_single_beat(
+        input logic [PW-1:0] x_in,
+        input logic [PW-1:0] w_in,
+        input logic [PW-1:0] threshold_in,
+        input logic last_in
+    );
+        begin
+            x <= x_in;
+            w <= w_in;
+            threshold <= threshold_in;
+            valid_in <= 1'b1;
+            last <= last_in;
+        end
+    endtask
+
+
     initial begin : drive_inputs
         $timeformat(-9, 0, " ns");
 
@@ -40,12 +69,24 @@ module neuron_tb #(
         x <= '0;
         w <= '0;
         threshold <= '0;
+        valid_in  <= 1'b0;
+        last      <= 1'b0;
 
         repeat (5) @(posedge clk);
         @(negedge clk);
         rst <= 1'b0;
 
-        
+        repeat(5) @(posedge clk);
+
+        //TESTS
+        drive_idle();
+        @(posedge clk);
+
+        send_single_beat(8'b10101010, 8'b11001100, 8'd4, 1'b1);
+        repeat(OUT_LATENCY) @(posedge clk);
+
+        disable generate_clock;
+        $display("Tests completed.");
     end
 
 

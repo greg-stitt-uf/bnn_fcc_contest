@@ -28,7 +28,6 @@ module neuron #(
         .rst(rst),
         .acc_en(acc_en),
         .acc_clr(acc_clr),
-        .last(last),
         .y(y),
         .popcount(popcount)
     );
