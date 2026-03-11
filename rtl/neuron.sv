@@ -9,6 +9,7 @@ module neuron #(
     input logic rst, 
     input logic en, 
     input logic valid_in,
+    //input logic last,
     input logic [NUM_WEIGHTS-1:0] w,
     input logic [NUM_INPUTS-1:0] x,
     output logic y,
@@ -24,8 +25,10 @@ module neuron #(
     // Status Registers
     logic [$clog2(NUM_INPUTS+1)-1:0] input_count_r;
     logic valid_r1, valid_r2, valid_r3, valid_r4;
+    //logic last_r1, last_r2, last_r3, last_r4;
     logic y_r;
-
+    // Get last and then reset
+    // Add accumulator 
     always_ff @(posedge clk or posedge rst) begin
         if (rst) begin
             xnor_out_r       <= '0; 
@@ -34,21 +37,23 @@ module neuron #(
             input_count_r    <= '0;
             y_r              <= '0; 
             valid_r1 <= 1'b0; valid_r2 <= 1'b0; valid_r3 <= 1'b0; valid_r4 <= 1'b0;
+            //last_r1 <= 1'b0; last_r2 <= 1'b0; last_r3 <= 1'b0; last_r4 <= 1'b0;
         end else if (en) begin 
             /* Stage 1*/ 
             xnor_out_r <= x ~^ w;
             valid_r1   <= valid_in; 
-
+            //last_r1 <= last;
             /* Stage 2 */
             count_ones_out_r <= $countones(xnor_out_r);
             valid_r2         <= valid_r1; 
-
+            //last_r2 <= last_r1;
             /* Stage 3*/
             if (valid_r2) begin
                 accum_r       <= accum_r + count_ones_out_r;
                 input_count_r <= input_count_r + 1'b1;
 
             end
+            //last_r3 <= last_r2;
             valid_r3 <= valid_r2;
 
             /* Stage 4 */

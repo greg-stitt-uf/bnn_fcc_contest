@@ -1,5 +1,5 @@
-// Neuron but as a state machine so popcount can reset each test
-module neuron_fsmd #(
+// Neuron but as a state machine AND can handle beats
+module neuron_beat #(
     parameter NUM_WEIGHTS = 4,
     parameter NUM_INPUTS = 4, 
     parameter int THRESHOLD_BITS = 4,
@@ -10,6 +10,7 @@ module neuron_fsmd #(
     input logic rst, 
     input logic en, 
     input logic valid_in,
+    input logic last,
     input logic [NUM_WEIGHTS-1:0] w,
     input logic [NUM_INPUTS-1:0] x,
     output logic y,
@@ -24,7 +25,6 @@ module neuron_fsmd #(
     
     // Status Registers
     logic [$clog2(NUM_INPUTS+1)-1:0] input_count_r, next_input_count;
-    logic valid_r1, valid_r2, valid_r3, valid_r4;
     logic y_r, next_y;
 
     typedef enum logic [1:0] {
@@ -73,13 +73,17 @@ module neuron_fsmd #(
                 end
             end
             COUNT_ONES: begin
-                next_count_ones_out = $countones(xnor_out_r); // get number of ones
-                next_state = OUTPUT;
-                next_y = (next_count_ones_out >= THRESHOLD_BITS) ? 1'b1 : 1'b0;
+                next_count_ones_out = count_ones_out_r + $countones(xnor_out_r); // get number of ones
+                if(last) begin
+                    next_state = OUTPUT;
+                    next_y = (next_count_ones_out >= THRESHOLD_BITS) ? 1'b1 : 1'b0;
+                end else begin // runs if we still have a beat 
+                    next_xnor_out = x ~^ w;
+                    next_state = COUNT_ONES;
+                end
             end
             OUTPUT: begin
                 valid_out = 1'b1;
-                popcount_out = count_ones_out_r;
                 next_state = START;
             end
             default: begin
@@ -87,6 +91,6 @@ module neuron_fsmd #(
             end
         endcase
     end
-
+    assign popcount_out = count_ones_out_r;
     assign y = y_r;
 endmodule

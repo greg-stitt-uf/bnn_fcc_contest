@@ -1,6 +1,6 @@
 `timescale 1ns/100ps
 
-module neuron__fsmd_tb #(parameter int NUM_TESTS = 10000
+module neuron_fsmd_tb #(parameter int NUM_TESTS = 10000
 );
     localparam int NUM_WEIGHTS = 4, NUM_INPUTS = 4;
     localparam int THRESHOLD_BITS = 3; 
