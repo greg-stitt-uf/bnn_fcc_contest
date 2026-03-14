@@ -60,13 +60,14 @@ module neuron #(
 
             /* Stage 4 */
             // need to fix the logic for valid
-            valid_r4 <= valid_r3;
             // if the last signal is true then we can output the result
             if (last_r3) begin
                 y_r      <= (input_count_r >= THRESHOLD_BITS) ? 1'b1 : 1'b0;
                 accum_r  <= '0; // reset the accumulator
+                valid_r4 <= 1'b1; 
             end else begin 
-                y_r      <= 0;
+                y_r      <= '0;
+                valid_r4 <= '0; 
             end 
         end
     end
