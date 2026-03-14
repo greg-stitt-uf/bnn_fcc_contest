@@ -7,9 +7,10 @@ module neuron_tb #(parameter int NUM_TESTS = 10000
     localparam int POPCOUNT_WIDTH = 32;
     logic clk = 1'b0, rst, valid_in;
     logic [NUM_WEIGHTS-1:0] w, x;
-    logic [$clog2(NUM_WEIGHTS+1)-1:0] y; 
+    logic y; 
     logic valid_out; 
     logic [POPCOUNT_WIDTH-1:0] popcount_out;
+    integer i; 
 
 
     neuron #(.NUM_WEIGHTS(NUM_WEIGHTS), .NUM_INPUTS(NUM_INPUTS), .THRESHOLD_BITS(THRESHOLD_BITS), .POPCOUNT_WIDTH(POPCOUNT_WIDTH)) DUT (
@@ -30,14 +31,13 @@ module neuron_tb #(parameter int NUM_TESTS = 10000
         repeat(10) @(posedge clk); 
         @(negedge clk);
         rst <= 1'b0;
-        repeat(5) @(posedge clk);
+        @(posedge clk);
 
-        for(int i = 0; i < NUM_TESTS; i++) begin 
+        for(i = 0; i < NUM_TESTS; i++) begin 
             x <= $urandom; 
             w <= $urandom; 
             valid_in <= 1'b1; 
-            
-            repeat(4) @(posedge clk);
+            @(posedge clk);
             valid_in <= 1'b0; 
             @(posedge clk);
 
