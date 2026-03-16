@@ -47,7 +47,6 @@ module neuron #(
             if (valid_r2) begin
                 accum_r       <= accum_r + count_ones_out_r;
                 input_count_r <= input_count_r + 1'b1;
-
             end
             valid_r3 <= valid_r2;
 
