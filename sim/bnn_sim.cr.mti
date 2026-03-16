@@ -5,26 +5,7 @@ Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 
 Top level modules:
 	neuron
 
-} {} {}} C:/Users/sreer/School/Spring_2026/RCII/Reconfigurable_Computing_Notes/Reconfigurable_Computing_II/SV_Code/Midterm/perfect_square_calculator.sv {1 {vlog -work work -sv -stats=none C:/Users/sreer/School/Spring_2026/RCII/Reconfigurable_Computing_Notes/Reconfigurable_Computing_II/SV_Code/Midterm/perfect_square_calculator.sv
-Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
--- Compiling module fsmd_1p
-
-Top level modules:
-	fsmd_1p
-
-} {} {}} C:/Users/sreer/School/Spring_2026/RCII/Reconfigurable_Computing_Notes/Reconfigurable_Computing_II/SV_Code/Midterm/perfect_square_calculator_tb.sv {0 {vlog -work work -sv -stats=none C:/Users/sreer/School/Spring_2026/RCII/Reconfigurable_Computing_Notes/Reconfigurable_Computing_II/SV_Code/Midterm/perfect_square_calculator_tb.sv
-Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
--- Compiling module perfect_square_calculator_tb
-** Error: C:/Users/sreer/School/Spring_2026/RCII/Reconfigurable_Computing_Notes/Reconfigurable_Computing_II/SV_Code/Midterm/perfect_square_calculator_tb.sv(13): (vlog-2730) Undefined variable: 'WIDTH'.
-** Warning: C:/Users/sreer/School/Spring_2026/RCII/Reconfigurable_Computing_Notes/Reconfigurable_Computing_II/SV_Code/Midterm/perfect_square_calculator_tb.sv(41): (vlog-2244) Variable 'valid_out' is implicitly static. You must either explicitly declare it as static or automatic
-or remove the initialization in the declaration of variable.
-** Warning: C:/Users/sreer/School/Spring_2026/RCII/Reconfigurable_Computing_Notes/Reconfigurable_Computing_II/SV_Code/Midterm/perfect_square_calculator_tb.sv(42): (vlog-2244) Variable 'output_t' is implicitly static. You must either explicitly declare it as static or automatic
-or remove the initialization in the declaration of variable.
-** Warning: C:/Users/sreer/School/Spring_2026/RCII/Reconfigurable_Computing_Notes/Reconfigurable_Computing_II/SV_Code/Midterm/perfect_square_calculator_tb.sv(43): (vlog-2244) Variable 'output_f' is implicitly static. You must either explicitly declare it as static or automatic
-or remove the initialization in the declaration of variable.
-** Error: (vlog-13069) C:/Users/sreer/School/Spring_2026/RCII/Reconfigurable_Computing_Notes/Reconfigurable_Computing_II/SV_Code/Midterm/perfect_square_calculator_tb.sv(58): near "go": syntax error, unexpected IDENTIFIER, expecting ';'.
-
-} {4.0 5.0 11.0 12.0} {}} C:/Users/sreer/School/Spring_2026/bnn_fcc_contest/verification/neuron_tb.sv {1 {vlog -work work -sv -stats=none C:/Users/sreer/School/Spring_2026/bnn_fcc_contest/verification/neuron_tb.sv
+} {} {}} C:/Users/sreer/School/Spring_2026/bnn_fcc_contest/verification/neuron_tb.sv {1 {vlog -work work -sv -stats=none C:/Users/sreer/School/Spring_2026/bnn_fcc_contest/verification/neuron_tb.sv
 Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
 -- Compiling module neuron_tb
 

@@ -11,7 +11,7 @@ cModel Technology
 dC:/Users/sreer/School/Spring_2026/RCII/lab1-SreeraaghavRaja-22/sim
 vfsmd_1p
 Z0 DXx6 sv_std 3 std 0 22 VYECXdT12H8WgbUP_5Y6:3
-!s110 1772770775
+!s110 1773636524
 !i10b 1
 !s100 ;IXMW:BPoW8[4`MOCl1Jd2
 Z1 !s11b Dg1SIo80bB@j0V0VzS_@n1
@@ -22,13 +22,13 @@ Z3 dC:/Users/sreer/School/Spring_2026/bnn_fcc_contest/sim
 w1772770767
 8C:/Users/sreer/School/Spring_2026/RCII/Reconfigurable_Computing_Notes/Reconfigurable_Computing_II/SV_Code/Midterm/perfect_square_calculator.sv
 FC:/Users/sreer/School/Spring_2026/RCII/Reconfigurable_Computing_Notes/Reconfigurable_Computing_II/SV_Code/Midterm/perfect_square_calculator.sv
-!i122 62
+!i122 66
 L0 4 70
 Z4 OV;L;2020.1;71
 r1
 !s85 0
 31
-!s108 1772770774.000000
+!s108 1773636524.000000
 !s107 C:/Users/sreer/School/Spring_2026/RCII/Reconfigurable_Computing_Notes/Reconfigurable_Computing_II/SV_Code/Midterm/perfect_square_calculator.sv|
 !s90 -reportprogress|300|-work|work|-sv|-stats=none|C:/Users/sreer/School/Spring_2026/RCII/Reconfigurable_Computing_Notes/Reconfigurable_Computing_II/SV_Code/Midterm/perfect_square_calculator.sv|
 !i113 1
@@ -36,24 +36,24 @@ Z5 o-work work -sv
 Z6 tCvgOpt 0
 vneuron
 R0
-!s110 1772770446
+Z7 !s110 1773638502
 !i10b 1
-!s100 S;19YPPM:FGWPkZgG[>K]2
+!s100 `VGh_;OV<4;OQz`ojSOZn0
 R1
-Ia]8JDM?@9Nj8S_`z4nGVT0
+IJm8gmd85oTF>M_CejDH5R2
 R2
 S1
 R3
-w1772142862
+w1773638329
 8C:/Users/sreer/School/Spring_2026/bnn_fcc_contest/rtl/neuron.sv
 FC:/Users/sreer/School/Spring_2026/bnn_fcc_contest/rtl/neuron.sv
-!i122 61
-L0 1 63
+!i122 96
+L0 1 78
 R4
 r1
 !s85 0
 31
-!s108 1772770445.000000
+Z8 !s108 1773638502.000000
 !s107 C:/Users/sreer/School/Spring_2026/bnn_fcc_contest/rtl/neuron.sv|
 !s90 -reportprogress|300|-work|work|-sv|-stats=none|C:/Users/sreer/School/Spring_2026/bnn_fcc_contest/rtl/neuron.sv|
 !i113 1
@@ -61,24 +61,24 @@ R5
 R6
 vneuron_tb
 R0
-!s110 1772142675
+R7
 !i10b 1
-!s100 VTMfj0[:df3eH@Collm`n1
+!s100 nfU:gFV=JaSTMZHTT1iCS3
 R1
-IOc6M5YI@:W?NB:XL@z5[g2
+IY[lcQjT9`>kBoDKoeNE^M1
 R2
 S1
 R3
-w1772142537
+w1773638497
 8C:/Users/sreer/School/Spring_2026/bnn_fcc_contest/verification/neuron_tb.sv
 FC:/Users/sreer/School/Spring_2026/bnn_fcc_contest/verification/neuron_tb.sv
-!i122 60
-L0 3 48
+!i122 97
+L0 3 68
 R4
 r1
 !s85 0
 31
-!s108 1772142675.000000
+R8
 !s107 C:/Users/sreer/School/Spring_2026/bnn_fcc_contest/verification/neuron_tb.sv|
 !s90 -reportprogress|300|-work|work|-sv|-stats=none|C:/Users/sreer/School/Spring_2026/bnn_fcc_contest/verification/neuron_tb.sv|
 !i113 1

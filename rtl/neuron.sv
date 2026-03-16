@@ -50,11 +50,10 @@ module neuron #(
             last_r2          <= last_r1;
 
             /* Stage 3*/
-            if (valid_r2) begin
+            if(valid_r2) begin
                 accum_r       <= accum_r + count_ones_out_r;
                 input_count_r <= input_count_r + 1'b1;
             end
-
             valid_r3 <= valid_r2;
             last_r3  <= last_r2;
 
