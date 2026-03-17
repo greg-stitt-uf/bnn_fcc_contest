@@ -30,7 +30,8 @@ module neuron_struct #(
         begin
             popcount_fn = '0;
             for (i = 0; i < PW; i++) begin
-                popcount_fn = popcount_fn + v[i];
+                if(v[i]) popcount_fn++;
+                //popcount_fn = popcount_fn + v[i];
             end
         end
     endfunction
