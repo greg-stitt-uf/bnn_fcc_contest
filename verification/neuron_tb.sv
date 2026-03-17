@@ -15,8 +15,8 @@ module neuron_tb #(parameter int NUM_TESTS = 15
 
 
     neuron #(.NUM_WEIGHTS(NUM_WEIGHTS), .NUM_INPUTS(NUM_INPUTS), .THRESHOLD_BITS(THRESHOLD_BITS), .POPCOUNT_WIDTH(POPCOUNT_WIDTH)) DUT (
-        .en(1'b1),
-        .*);
+       .en(1'b1),
+       .*);
 
 
     initial begin : generate_clk
