@@ -43,7 +43,9 @@ module neuron_struct #(
         end
         else begin
             if(acc_clr) begin
+                popcount_r <= popcount_fn(xnor_vals);
                 accumulator_r <= '0;
+                threshold_r <= threshold;
             end
             else if(acc_en) begin
                 popcount_r <= popcount_fn(xnor_vals);
