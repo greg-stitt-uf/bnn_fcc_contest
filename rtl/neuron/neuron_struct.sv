@@ -45,9 +45,8 @@ module neuron_struct #(
         end
         else begin
             if(acc_clr) begin
-                accumulator_r <= '0;
-                popcount_r <= '0;
-                threshold_r <= '0;
+                accumulator_r <= beat_count;
+                popcount_r <= beat_count;
             end
             else if(acc_en) begin
                 popcount_r <= beat_count;
