@@ -221,4 +221,12 @@ module neuron_tb_depth #(
         disable generate_clock;
     end
 
+    property p_last_to_valid_out;
+        @(posedge clk) disable iff (rst)
+        (valid_in && last) |=> !valid_out ##1 valid_out;
+    endproperty
+
+    assert property (p_last_to_valid_out)
+        else $error("valid_out was not asserted exactly 2 cycles after last");
+
 endmodule
