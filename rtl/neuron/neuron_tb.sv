@@ -16,7 +16,7 @@ module neuron_tb #(
     logic [PW-1:0] popcount;
     logic valid_out;
 
-    logic [PW-1:0] xin, win, thresholdin, 
+    logic [PW-1:0] xin, win, thresholdin;
     logic lastin, validin;
 
     logic [PW-1:0] model_accum;
@@ -65,7 +65,7 @@ module neuron_tb #(
         input logic [PW-1:0] x_in,
         input logic [PW-1:0] w_in,
         input logic [PW-1:0] threshold_in,
-        input logic last_in
+        input logic last_in,
         input logic valid_in_stim
     );
         begin
@@ -102,10 +102,12 @@ module neuron_tb #(
 
         //TESTS
         drive_idle();
-        @(posedge clk);
-
+        @(negedge clk);
         send_single_beat(8'b10101010, 8'b11001100, 8'd4, 1'b1, 1'b1);
-        repeat(OUT_LATENCY) @(posedge clk);
+        @(negedge clk);
+        drive_idle();
+
+        repeat(5) @(posedge clk);
 
         disable generate_clock;
         disable neuron_model;
