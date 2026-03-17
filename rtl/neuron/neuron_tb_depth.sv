@@ -78,21 +78,19 @@ module neuron_tb_depth #(
     function automatic model_out_t model(
         input bit [PW-1:0] x_beats[],
         input bit [PW-1:0] w_beats[],
-        input bit [PW-1:0] threshold
+        input logic [PW-1:0] threshold
     );
         model_out_t result;
-        logic [PW-1:0] beat_count;
         int i, j;
         begin
             result.popcount = '0;
             result.y        = 1'b0;
 
             for (i = 0; i < x_beats.size(); i++) begin
-                beat_count = '0;
                 for (j = 0; j < PW; j++) begin
-                    beat_count = beat_count + (~(x_beats[i][j] ^ w_beats[i][j]));
+                    if (!(x_beats[i][j] ^ w_beats[i][j]))
+                        result.popcount = result.popcount + 1;
                 end
-                result.popcount = result.popcount + beat_count;
             end
 
             result.y = (result.popcount >= threshold);
