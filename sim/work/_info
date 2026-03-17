@@ -9,53 +9,103 @@ z2
 !i10f 100
 cModel Technology
 dC:/Users/sreer/School/Spring_2026/RCII/lab1-SreeraaghavRaja-22/sim
-vneuron
+vfsmd_1p
 Z0 DXx6 sv_std 3 std 0 22 VYECXdT12H8WgbUP_5Y6:3
-Z1 !s110 1772142675
+!s110 1773636524
 !i10b 1
-!s100 34QVTiSH31]n>GDPME8aa0
-Z2 !s11b Dg1SIo80bB@j0V0VzS_@n1
-IU>OWeYPhECY`Y7X`2A4ce1
-Z3 VDg1SIo80bB@j0V0VzS_@n1
+!s100 ;IXMW:BPoW8[4`MOCl1Jd2
+Z1 !s11b Dg1SIo80bB@j0V0VzS_@n1
+IbaiiHLEVdi4OUde4T9aaB2
+Z2 VDg1SIo80bB@j0V0VzS_@n1
 S1
-Z4 dC:/Users/sreer/School/Spring_2026/bnn_fcc_contest/sim
-w1772142245
-8C:/Users/sreer/School/Spring_2026/bnn_fcc_contest/rtl/neuron.sv
-FC:/Users/sreer/School/Spring_2026/bnn_fcc_contest/rtl/neuron.sv
-!i122 59
-L0 1 64
-Z5 OV;L;2020.1;71
+Z3 dC:/Users/sreer/School/Spring_2026/bnn_fcc_contest/sim
+w1772770767
+8C:/Users/sreer/School/Spring_2026/RCII/Reconfigurable_Computing_Notes/Reconfigurable_Computing_II/SV_Code/Midterm/perfect_square_calculator.sv
+FC:/Users/sreer/School/Spring_2026/RCII/Reconfigurable_Computing_Notes/Reconfigurable_Computing_II/SV_Code/Midterm/perfect_square_calculator.sv
+!i122 66
+L0 4 70
+Z4 OV;L;2020.1;71
 r1
 !s85 0
 31
-Z6 !s108 1772142675.000000
+!s108 1773636524.000000
+!s107 C:/Users/sreer/School/Spring_2026/RCII/Reconfigurable_Computing_Notes/Reconfigurable_Computing_II/SV_Code/Midterm/perfect_square_calculator.sv|
+!s90 -reportprogress|300|-work|work|-sv|-stats=none|C:/Users/sreer/School/Spring_2026/RCII/Reconfigurable_Computing_Notes/Reconfigurable_Computing_II/SV_Code/Midterm/perfect_square_calculator.sv|
+!i113 1
+Z5 o-work work -sv
+Z6 tCvgOpt 0
+vneuron
+R0
+Z7 !s110 1773638502
+!i10b 1
+!s100 `VGh_;OV<4;OQz`ojSOZn0
+R1
+IJm8gmd85oTF>M_CejDH5R2
+R2
+S1
+R3
+w1773638329
+8C:/Users/sreer/School/Spring_2026/bnn_fcc_contest/rtl/neuron.sv
+FC:/Users/sreer/School/Spring_2026/bnn_fcc_contest/rtl/neuron.sv
+!i122 96
+L0 1 78
+R4
+r1
+!s85 0
+31
+Z8 !s108 1773638502.000000
 !s107 C:/Users/sreer/School/Spring_2026/bnn_fcc_contest/rtl/neuron.sv|
 !s90 -reportprogress|300|-work|work|-sv|-stats=none|C:/Users/sreer/School/Spring_2026/bnn_fcc_contest/rtl/neuron.sv|
 !i113 1
-Z7 o-work work -sv
-Z8 tCvgOpt 0
+R5
+R6
 vneuron_tb
 R0
-R1
+R7
 !i10b 1
-!s100 VTMfj0[:df3eH@Collm`n1
+!s100 nfU:gFV=JaSTMZHTT1iCS3
+R1
+IY[lcQjT9`>kBoDKoeNE^M1
 R2
-IOc6M5YI@:W?NB:XL@z5[g2
-R3
 S1
-R4
-w1772142537
+R3
+w1773638497
 8C:/Users/sreer/School/Spring_2026/bnn_fcc_contest/verification/neuron_tb.sv
 FC:/Users/sreer/School/Spring_2026/bnn_fcc_contest/verification/neuron_tb.sv
-!i122 60
-L0 3 48
-R5
+!i122 97
+L0 3 68
+R4
 r1
 !s85 0
 31
-R6
+R8
 !s107 C:/Users/sreer/School/Spring_2026/bnn_fcc_contest/verification/neuron_tb.sv|
 !s90 -reportprogress|300|-work|work|-sv|-stats=none|C:/Users/sreer/School/Spring_2026/bnn_fcc_contest/verification/neuron_tb.sv|
 !i113 1
-R7
-R8
+R5
+R6
+vperfect_square_calculator_tb
+R0
+!s110 1772770863
+!i10b 1
+!s100 >I;eZl=C^118k1I2bEkPA3
+R1
+IhN?HGLbi;:[?AXOOGChPI3
+R2
+S1
+R3
+w1772770861
+8C:/Users/sreer/School/Spring_2026/RCII/Reconfigurable_Computing_Notes/Reconfigurable_Computing_II/SV_Code/Midterm/perfect_square_calculator_tb.sv
+FC:/Users/sreer/School/Spring_2026/RCII/Reconfigurable_Computing_Notes/Reconfigurable_Computing_II/SV_Code/Midterm/perfect_square_calculator_tb.sv
+!i122 63
+L0 1 11
+R4
+r1
+!s85 0
+31
+!s108 1772770863.000000
+!s107 C:/Users/sreer/School/Spring_2026/RCII/Reconfigurable_Computing_Notes/Reconfigurable_Computing_II/SV_Code/Midterm/perfect_square_calculator_tb.sv|
+!s90 -reportprogress|300|-work|work|-sv|-stats=none|C:/Users/sreer/School/Spring_2026/RCII/Reconfigurable_Computing_Notes/Reconfigurable_Computing_II/SV_Code/Midterm/perfect_square_calculator_tb.sv|
+!i113 1
+R5
+R6
