@@ -1,4 +1,4 @@
-module neuron_tb #(
+module neuron_tb_simple #(
     parameter int PW = 8
 );
 
