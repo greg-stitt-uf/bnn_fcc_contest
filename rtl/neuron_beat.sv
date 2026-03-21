@@ -30,8 +30,8 @@ module neuron_beat #(
     typedef enum logic [1:0] {
         START,
         COUNT_ONES,
-        ACCUM,
-        OUTPUT
+        OUTPUT,
+        DO_NOTHING
     } state_t;
 
     state_t state_r, next_state;
@@ -77,9 +77,18 @@ module neuron_beat #(
                 if(last) begin
                     next_state = OUTPUT;
                     next_y = (next_count_ones_out >= THRESHOLD_BITS) ? 1'b1 : 1'b0;
-                end else begin // runs if we still have a beat 
-                    next_xnor_out = x ~^ w;
-                    next_state = COUNT_ONES;
+                end else begin // runs if we still have a beat
+                    if(valid_in) begin
+                        next_xnor_out = x ~^ w;
+                        next_state = COUNT_ONES;
+                    end 
+                        next_state = DO_NOTHING;
+                end
+            end
+            DO_NOTHING: begin
+                next_state = DO_NOTHING;
+                if(valid_in && last) begin
+                    
                 end
             end
             OUTPUT: begin
