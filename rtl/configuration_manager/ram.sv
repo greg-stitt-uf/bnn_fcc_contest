@@ -5,7 +5,7 @@ module ram #(
     input  logic                  clk,
     input  logic                  rst,
     input  logic                  wr_en,
-    input  logic                  rd_en,
+    input  logic                  rd_en, // always 1
     input  logic [ADDR_WIDTH-1:0] addr,
     input  logic [DATA_WIDTH-1:0] wr_data,
     output logic [DATA_WIDTH-1:0] rd_data

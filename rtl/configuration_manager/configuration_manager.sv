@@ -28,26 +28,39 @@ module config_manager #(
         [63:48] = bytes_per_neuron; # of bytes in payload per neuron
         [95:64] = total_bytes; total # of bytes for the message
         [127:96] = reserved, ignore last 4 bytes for now
-
     */
+
+    // 128 bit bus MSB-->LSB
+    typedef struct packed {
+        logic [31:0] reserved;
+        logic [31:0] total_bytes;
+        logic [15:0] bytes_per_neuron;
+        logic [15:0] num_neurons;
+        logic [15:0] layer_inputs;
+        logic [7:0]  layer_id;
+        logic [7:0]  msg_type;
+    } config_header_t;
+    config_header_t header;
+
+    typedef enum {
+        CONFIG1,
+        CONFIG2,
+        CONFIG3,
+        CONFIG4,
+        PAYLOAD
+    } state_t;
+    state_t curr_state, next_state;
+
+    always_ff @(posedge clk or posedge rst) begin
+        
+    end
 
     // Store the config header at first few addresses in RAM component
     // We'll create a ram component that can be addressed with axi for pipelined read/write potentially
     // Create a basic ram component to just read the inputs and store, tryd
     
-    
-    // dependent on the amount of layers and neuron processors, 
-    ram#(
-        .DATA_WIDTH(ram_pkg::DATA_WIDTH),
-        .ADDR_WIDTH(ram_pkg::ADDR_WIDTH)
-    ) thresh_ram (
-        .clk(clk),
-        .rst(rst),
-        .wr_en(threshold_wr_en[i]),
-        .rd_en(1),
-        .addr(address),
-        .wr_data(threshold_wr_data[i]),
-        .rd_data(threshold_rd_data[i])
-    );
+    // process to read in 
 
 endmodule
+
+
