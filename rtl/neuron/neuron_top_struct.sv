@@ -60,7 +60,27 @@ module neuron_top_struct #(
         .valid_out(valid_out)
     );
 
-    weight_bram weight_bram_inst ( // may have to regenerate these brams since I used 16 width bits instead of 8.... depends on what we do with PW
+    //instantiation instructions
+    // Opened Vivado and loaded the project
+    // Navigated to IP Catalog in the Flow Navigator
+    // Searched for and selected Block Memory Generator
+    // Added the IP to the project
+    // Configured Memory Type as True Dual-Port RAM
+    // Set Data Width to 16 bits
+    // Set Memory Depth to 64 entries
+    // Set Address Width to 6 bits
+    // Enabled Single Clock Operation for both ports
+    // Enabled EN (Enable) pins for memory access
+    // Set Write Mode to WRITE_FIRST
+    // Enabled Output Registering
+    // Configured Read Latency = 1 cycle (plus 1 cycle from output register ? total 2 cycles)
+    // Enabled Memory Initialization File
+    // Loaded .mem file (e.g., weight_bram.mem / threshold_bram.mem)
+    // Generated the IP and output products
+    // Instantiated the generated BRAM module in SystemVerilog
+    // Connected clk, en, addr, and dout signals in the design
+    // Ensured .mem files were included in the simulation directory for proper initialization
+    weight_bram weight_bram_inst (
         .clka(clk),
         .ena(1'b0),               
         .wea(1'b0),             
