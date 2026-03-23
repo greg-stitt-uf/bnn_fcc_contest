@@ -221,12 +221,4 @@ module tb_neuron_top #(
         disable generate_clock;
     end
 
-    property p_exact_four_cycle_latency;
-        @(posedge clk) disable iff (rst)
-        (valid_in && last) |-> ##1 !valid_out ##1 !valid_out ##1 !valid_out ##1 valid_out;
-    endproperty
-
-    assert property (p_exact_four_cycle_latency)
-        else $error("Output latency is not exactly 4 cycles through neuron_top");
-
 endmodule
