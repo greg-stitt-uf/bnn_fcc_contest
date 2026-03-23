@@ -12,7 +12,7 @@
 module bnn_fcc #(
     parameter int INPUT_DATA_WIDTH  = 8,
     parameter int INPUT_BUS_WIDTH   = 64,
-    parameter int CONFIG_BUS_WIDTH  = 32,
+    parameter int CONFIG_BUS_WIDTH  = config_pkg::CONFIG_BUS_WIDTH,
     parameter int OUTPUT_DATA_WIDTH = 4,
     parameter int OUTPUT_BUS_WIDTH  = 8,
 
@@ -31,7 +31,7 @@ module bnn_fcc #(
     input  logic                          config_valid,
     output logic                          config_ready,
     input  logic [  CONFIG_BUS_WIDTH-1:0] config_data,
-    input  logic [CONFIG_BUS_WIDTH/8-1:0] config_keep,
+    input  logic [config_pkg::CONFIG_KEEP_SIZE-1:0] config_keep,
     input  logic                          config_last,
 
     // AXI streaming image input interface (consumer)
