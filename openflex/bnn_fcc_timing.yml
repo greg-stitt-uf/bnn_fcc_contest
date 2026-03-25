@@ -1,0 +1,28 @@
+mode: synth
+tool: vivado
+top: bnn_fcc_timing
+clock: clk
+device: XCU250-FIGD2104-2L-E
+
+files:
+  # Add all required source files:
+  # e.g.:
+  #- ../rtl/binary_neuron.sv
+  #- ../rtl/binary_layer.sv
+  #- ../rtl/bnn.sv
+
+  # These are common to all projects.
+  - ../rtl/bnn_fcc.sv
+  - rtl/bnn_fcc_timing.sv
+
+parameters:
+  INPUT_DATA_WIDTH: [8]
+  INPUT_BUS_WIDTH: [64]
+  CONFIG_BUS_WIDTH: [64]
+  OUTPUT_DATA_WIDTH: [4]
+  OUTPUT_BUS_WIDTH: [8]
+  TOTAL_LAYERS: [4]
+  # NOTE: TOPOLOGY is ommitted here since you can't specify array parameters from the command line.
+  # Make sure you don't change the default value in bnn_fcc_timing 
+
+# TODO: Update implementation-specific parameters in bnn_fcc_timing.sv.

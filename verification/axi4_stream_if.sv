@@ -22,15 +22,7 @@ interface axi4_stream_if #(
     logic tlast;
     logic [ID_WIDTH-1:0] tid;
     logic [DEST_WIDTH-1:0] tdest;
-    logic [USER_WIDTH-1:0] tuser;
-
-    // ===================================
-    // MODPORTS
-    // ===================================
-
-    modport Source(input aclk, aresetn, input tready, output tvalid, tdata, tstrb, tkeep, tlast, tuser, tid, tdest, import clear_source_outputs);
-
-    modport Sink(input aclk, aresetn, input tvalid, tdata, tstrb, tkeep, tlast, tuser, tid, tdest, output tready, import clear_sink_outputs);
+    logic [USER_WIDTH-1:0] tuser;    
 
     // AXI requires byte-aligned data widths, so confirm compliance here.
     initial begin
