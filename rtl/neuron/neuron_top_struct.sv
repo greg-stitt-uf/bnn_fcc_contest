@@ -6,10 +6,10 @@ module neuron_top_struct #(
     input logic [PW-1:0]  x,
 
     input logic           thres_read_en,
-    input logic [5:0]     thres_read_addr,
+    input logic [9:0]     thres_read_addr,
 
     input logic           w_read_en,
-    input logic [5:0]     w_read_addr,
+    input logic [9:0]     w_read_addr,
 
     input logic           last,
     input logic           valid_in,
@@ -85,11 +85,13 @@ module neuron_top_struct #(
         .ena(1'b0),               
         .wea(1'b0),             
         .addra('0),        
-        .dina('0),      
+        .dina('0),
+        .douta(),    
         .clkb(clk),
         .enb(w_read_en),        
         .web(1'b0),                  
-        .addrb(w_read_addr),       
+        .addrb(w_read_addr),   
+        .dinb('0),    
         .doutb(w)                    
     );
 
@@ -99,10 +101,12 @@ module neuron_top_struct #(
         .wea(1'b0),
         .addra('0),
         .dina('0),
+        .douta(),
         .clkb(clk),
         .enb(thres_read_en),
         .web(1'b0),
         .addrb(thres_read_addr),
+        .dinb('0),
         .doutb(threshold)
     );
 

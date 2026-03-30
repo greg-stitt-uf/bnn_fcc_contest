@@ -14,9 +14,9 @@ module neuron_top #(
 );
 
     logic           thres_read_en;
-    logic [5:0]     thres_read_addr;
+    logic [9:0]     thres_read_addr;
     logic           w_read_en;
-    logic [5:0]     w_read_addr;
+    logic [9:0]     w_read_addr;
 
     neuron_top_cont #(
         .PW(PW)

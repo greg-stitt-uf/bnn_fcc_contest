@@ -6,11 +6,11 @@ module tb_bram_latency;
 
   logic                 clka, clkb;
   logic                 ena, wea;
-  logic [5:0]           addra;
+  logic [9:0]           addra;
   logic [PW-1:0]        dina;
 
   logic                 enb, web;
-  logic [5:0]           addrb;
+  logic [9:0]           addrb;
   logic [PW-1:0]        doutb;
 
   // DUT: your Vivado-generated BRAM wrapper

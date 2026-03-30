@@ -1,5 +1,6 @@
 `timescale 1ns/1ps
 
+// PASTE THE MIF FILES INTO THE DIRECTORY WHERE YOU ARE RUNNING YOUR SIM. TO CHECK, RUN pwd IN THE VSIM CONSOLE
 module tb_neuron_top #(
     parameter int PW = 16,
     parameter NUM_TESTS = 1000,
@@ -21,8 +22,8 @@ module tb_neuron_top #(
 
     int passed, failed;
 
-    logic [PW-1:0] weight_mem    [0:63];
-    logic [PW-1:0] threshold_mem [0:63];
+    logic [PW-1:0] weight_mem    [0:1023];
+    logic [PW-1:0] threshold_mem [0:1023];
 
     neuron_top #(
         .PW(PW)
@@ -94,8 +95,8 @@ module tb_neuron_top #(
     endfunction
 
     initial begin : load_mem_files
-        $readmemh("weight_bram.mem", weight_mem);
-        $readmemh("threshold_bram.mem", threshold_mem);
+        $readmemb("weight_bram.mif", weight_mem);
+        $readmemb("threshold_bram.mif", threshold_mem);
     end
 
     initial begin : generate_clock
@@ -163,12 +164,12 @@ module tb_neuron_top #(
             @(posedge clk iff (!rst && valid_in));
 
             x_q.push_back(x);
-            w_q.push_back(weight_mem[w_ptr % 64]);
+            w_q.push_back(weight_mem[w_ptr % 1024]);
             
             w_ptr++;
 
             if (last) begin
-                txn = '{x_beats:x_q, w_beats:w_q, threshold: threshold_mem[t_ptr % 64]};
+                txn = '{x_beats:x_q, w_beats:w_q, threshold: threshold_mem[t_ptr % 1024]};
                 scoreboard_input_mailbox.put(txn);
                 t_ptr++;
                 x_q = {};
