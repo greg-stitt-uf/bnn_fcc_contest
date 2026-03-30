@@ -1,5 +1,6 @@
 `timescale 1ns/1ps
 
+// PASTE THE MIF FILES INTO THE DIRECTORY WHERE YOU ARE RUNNING YOUR SIM. TO CHECK, RUN pwd IN THE VSIM CONSOLE
 module tb_neuron_top #(
     parameter int PW = 16,
     parameter NUM_TESTS = 1000,
