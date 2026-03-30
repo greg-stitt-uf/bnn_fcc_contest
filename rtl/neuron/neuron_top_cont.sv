@@ -5,10 +5,10 @@ module neuron_top_cont # (
     input logic            rst,
 
     output logic           thres_read_en,
-    output logic [5:0]     thres_read_addr,
+    output logic [9:0]     thres_read_addr,
 
     output logic           w_read_en,
-    output logic [5:0]     w_read_addr,
+    output logic [9:0]     w_read_addr,
 
     input logic            last,
     input logic            valid_in
