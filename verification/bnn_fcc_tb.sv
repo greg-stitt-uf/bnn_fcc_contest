@@ -83,9 +83,9 @@
 
 module bnn_fcc_tb #(
     // Testbench configuration
-    parameter int      USE_CUSTOM_TOPOLOGY                           = 1'b0,
+    parameter int      USE_CUSTOM_TOPOLOGY                           = 1'b0,  //make 1 for easy topology
     parameter int      CUSTOM_LAYERS                                 = 4,
-    parameter int      CUSTOM_TOPOLOGY               [CUSTOM_LAYERS] = '{8, 4, 4, 2},
+    parameter int      CUSTOM_TOPOLOGY               [CUSTOM_LAYERS] = '{8, 4, 4, 2}, // {4,2,2,1} even easier
     parameter int      NUM_TEST_IMAGES                               = 10,
     parameter bit      VERIFY_SV_MODEL_AGAINST_PYTHON                = 1,
     parameter string   BASE_DIR                                      = "../python",
