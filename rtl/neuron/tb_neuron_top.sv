@@ -3,6 +3,7 @@
 // PASTE THE MIF FILES INTO THE DIRECTORY WHERE YOU ARE RUNNING YOUR SIM. TO CHECK, RUN pwd IN THE VSIM CONSOLE
 module tb_neuron_top #(
     parameter int PW = 16,
+    parameter int ADDR_W = 10,
     parameter NUM_TESTS = 1000,
     parameter int MIN_BEATS = 1,
     parameter int MAX_BEATS = 5,
@@ -26,7 +27,8 @@ module tb_neuron_top #(
     logic [PW-1:0] threshold_mem [0:1023];
 
     neuron_top #(
-        .PW(PW)
+        .PW(PW),
+        .ADDR_W(ADDR_W)
     ) dut (
         .clk(clk),
         .rst(rst),

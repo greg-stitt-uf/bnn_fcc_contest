@@ -1,14 +1,15 @@
 module neuron_top_cont # (
-    parameter int PW = 8
+    parameter int PW = 8,
+    parameter int ADDR_W = 10
 )(
     input logic            clk,
     input logic            rst,
 
     output logic           thres_read_en,
-    output logic [9:0]     thres_read_addr,
+    output logic [ADDR_W-1:0]     thres_read_addr,
 
     output logic           w_read_en,
-    output logic [9:0]     w_read_addr,
+    output logic [ADDR_W-1:0]     w_read_addr,
 
     input logic            last,
     input logic            valid_in

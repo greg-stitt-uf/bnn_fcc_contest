@@ -1,22 +1,23 @@
 module neuron_top_struct #(
-    parameter int PW = 8
+    parameter int PW = 8,
+    parameter int ADDR_W = 10
 )(
     input logic           clk,
     input logic           rst,
     input logic [PW-1:0]  x,
 
     input logic           thres_read_en,
-    input logic [9:0]     thres_read_addr,
+    input logic [ADDR_W-1:0]     thres_read_addr,
 
     input logic           w_read_en,
-    input logic [9:0]     w_read_addr,
+    input logic [ADDR_W-1:0]     w_read_addr,
 
     input  logic          cfg_w_we,
-    input  logic [9:0]    cfg_w_addr,
+    input  logic [ADDR_W-1:0]    cfg_w_addr,
     input  logic [PW-1:0] cfg_w_data,
 
     input  logic          cfg_t_we,
-    input  logic [9:0]    cfg_t_addr,
+    input  logic [ADDR_W-1:0]    cfg_t_addr,
     input  logic [PW-1:0] cfg_t_data,
 
     input logic           last,
