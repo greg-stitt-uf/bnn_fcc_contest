@@ -8,6 +8,14 @@ module neuron_top #(
     input logic           last,
     input logic           valid_in,
 
+    input  logic         cfg_w_we,
+    input  logic [9:0]   cfg_w_addr,
+    input  logic [PW-1:0] cfg_w_data,
+
+    input  logic         cfg_t_we,
+    input  logic [9:0]   cfg_t_addr,
+    input  logic [PW-1:0] cfg_t_data,
+
     output logic          y,
     output logic [PW-1:0] popcount,
     output logic          valid_out
@@ -37,6 +45,15 @@ module neuron_top #(
         .clk(clk),
         .rst(rst),
         .x(x),
+
+        .cfg_w_we(cfg_w_we),
+        .cfg_w_addr(cfg_w_addr),
+        .cfg_w_data(cfg_w_data),
+
+        .cfg_t_we(cfg_t_we),
+        .cfg_t_addr(cfg_t_addr),
+        .cfg_t_data(cfg_t_data),
+        
         .thres_read_en(thres_read_en),
         .thres_read_addr(thres_read_addr),
         .w_read_en(w_read_en),
