@@ -11,6 +11,14 @@ module neuron_top_struct #(
     input logic           w_read_en,
     input logic [9:0]     w_read_addr,
 
+    input  logic          cfg_w_we,
+    input  logic [9:0]    cfg_w_addr,
+    input  logic [PW-1:0] cfg_w_data,
+
+    input  logic          cfg_t_we,
+    input  logic [9:0]    cfg_t_addr,
+    input  logic [PW-1:0] cfg_t_data,
+
     input logic           last,
     input logic           valid_in,
 
@@ -82,11 +90,12 @@ module neuron_top_struct #(
     // Ensured .mem files were included in the simulation directory for proper initialization
     weight_bram weight_bram_inst (
         .clka(clk),
-        .ena(1'b0),               
-        .wea(1'b0),             
-        .addra('0),        
-        .dina('0),
-        .douta(),    
+        .ena(cfg_w_we),
+        .wea(cfg_w_we),
+        .addra(cfg_w_addr),
+        .dina(cfg_w_data),
+        .douta(),   
+
         .clkb(clk),
         .enb(w_read_en),        
         .web(1'b0),                  
@@ -97,11 +106,12 @@ module neuron_top_struct #(
 
     threshold_bram threshold_bram_inst (
         .clka(clk),
-        .ena(1'b0),
-        .wea(1'b0),
-        .addra('0),
-        .dina('0),
+        .ena(cfg_t_we),
+        .wea(cfg_t_we),
+        .addra(cfg_t_addr),
+        .dina(cfg_t_data),
         .douta(),
+
         .clkb(clk),
         .enb(thres_read_en),
         .web(1'b0),
