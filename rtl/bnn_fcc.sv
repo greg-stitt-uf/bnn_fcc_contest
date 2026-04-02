@@ -18,7 +18,7 @@ module bnn_fcc #(
     input  logic                          config_valid,
     output logic                          config_ready,
     input  logic [  CONFIG_BUS_WIDTH-1:0] config_data,
-    input  logic [CONFIG_BUS_WIDTH/8-1:0] config_keep,
+    input  logic [config_pkg::CONFIG_KEEP_SIZE-1:0] config_keep,
     input  logic                          config_last,
 
     // AXI streaming image input interface (consumer)
