@@ -42,16 +42,19 @@ module config_manager #(
     } config_header_t;
     config_header_t header;
 
+    typedef struct packed {
+        logic [31:0] weight;
+    } weight_t;
+
     typedef enum {
-        CONFIG1,
-        CONFIG2,
+        HEADER,
         PAYLOAD
     } state_t;
     state_t curr_state, next_state;
 
     always_ff @(posedge clk or posedge rst) begin
         if (rst) begin
-            curr_state <= CONFIG1;
+            curr_state <= HEADER;
             header <= '0; // clears header
         end else begin
             curr_state <= next_state;
@@ -60,25 +63,31 @@ module config_manager #(
 
     always_comb begin
         case (curr_state)
-            CONFIG1: begin
-                if (config_valid) begin
-                    header.msg_type = config_data_in[7:0];
-                    header.layer_id = config_data_in[15:8];
-                    header.layer_inputs = config_data_in[31:16];
-                    header.num_neurons = config_data_in[47:32];
-                    header.bytes_per_neuron = config_data_in[63:48];
-                    next_state = CONFIG2;
+            HEADER: begin
+                if (config_valid && !config_last) begin
+                    header.msg_type = (config_keep[0]) ? config_data_in[7:0] : '0;
+                    header.layer_id = (config_keep[1]) ? config_data_in[15:8] : '0;
+                    header.layer_inputs[7:0] = (config_keep[2]) ? config_data_in[23:16] : '0;
+                    header.layer_inputs[15:8] = (config_keep[3]) ? config_data_in[31:24] : '0;
+                    header.num_neurons[7:0] = (config_keep[4]) ? config_data_in[39:32] : '0;
+                    header.num_neurons[15:8] = (config_keep[5]) ? config_data_in[47:40] : '0;
+                    header.bytes_per_neuron[7:0] = (config_keep[6]) ? config_data_in[55:48] : '0;
+                    header.bytes_per_neuron[15:8] = (config_keep[7]) ? config_data_in[63:56] : '0;
+                    next_state = HEADER;
+                end else if (config_valid && config_last) begin
+                    header.total_bytes[7:0] = (config_keep[0]) ? config_data_in[7:0] : '0;
+                    header.total_bytes[15:8] = (config_keep[1]) ? config_data_in[15:8] : '0;
+                    header.total_bytes[23:16] = (config_keep[2]) ? config_data_in[23:16] : '0;
+                    header.total_bytes[31:24] = (config_keep[3]) ? config_data_in[31:24] : '0;
+                    header.reserved[7:0] = (config_keep[4]) ? config_data_in[39:32] : '0;
+                    header.reserved[15:8] = (config_keep[5]) ? config_data_in[47:40] : '0;
+                    header.reserved[23:16] = (config_keep[6]) ? config_data_in[55:48] : '0; 
+                    header.reserved[31:24] = (config_keep[7]) ? config_data_in[63:56] : '0;
+                    next_state = PAYLOAD;
                 end else begin
-                    next_state = CONFIG1;
+                    next_state = HEADER;
                 end
             end
-
-            CONFIG2: begin
-                if (config_valid) begin
-                    header.total_bytes = config_data_in[31:0];
-                    header.reserved = config_data_in[63:32];
-                end
-            end 
 
             PAYLOAD: begin
                 
