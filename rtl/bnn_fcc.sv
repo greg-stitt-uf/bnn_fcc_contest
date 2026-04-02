@@ -44,10 +44,7 @@ module bnn_fcc #(
 
     // will read the header fields and store it
     config_manager #(
-        .BUS_WIDTH(CONFIG_BUS_WIDTH),
-        .LAYERS(TOTAL_LAYERS-1),
-        .PARALLEL_INPUTS(PARALLEL_INPUTS),
-        .PARALLEL_NEURONS(PARALLEL_NEURONS)
+        .BUS_WIDTH(CONFIG_BUS_WIDTH)
     ) config_manager_inst (
         .clk(clk),
         .rst(rst),
@@ -63,7 +60,7 @@ module bnn_fcc #(
         .num_neurons(num_neurons),
         .layer_inputs(layer_inputs),
         .layer_id(layer_id),
-        .msg_type()
+        .msg_type(msg_type)
     );
     
     // will read the image data and push out the data to the neurons as it's being streamed in
@@ -92,5 +89,5 @@ module bnn_fcc #(
     );
 
 
-    
+
 endmodule
