@@ -1,7 +1,7 @@
 -- Copyright 1986-2021 Xilinx, Inc. All Rights Reserved.
 -- --------------------------------------------------------------------------------
 -- Tool Version: Vivado v.2021.2 (lin64) Build 3367213 Tue Oct 19 02:47:39 MDT 2021
--- Date        : Mon Mar 30 17:32:04 2026
+-- Date        : Mon Mar 30 18:16:07 2026
 -- Host        : ece-lnx-08 running 64-bit Red Hat Enterprise Linux Server release 7.9 (Maipo)
 -- Command     : write_vhdl -force -mode synth_stub
 --               /ecel/UFAD/ca.oeltjen/Desktop/BNN/bnn_synth/bnn_synthesis/bnn_synthesis.gen/sources_1/ip/weight_bram/weight_bram_stub.vhdl
