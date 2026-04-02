@@ -3,12 +3,13 @@ module neuron #(
 )(
     input logic           clk,
     input logic           rst,
+
     input logic [PW-1:0]  x,
     input logic [PW-1:0]  w,
     input logic [PW-1:0]  threshold,
+
     input logic           valid_in,
     input logic           last,
-
 
     output logic          y,
     output logic [PW-1:0] popcount,

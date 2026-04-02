@@ -14,14 +14,20 @@ module neuron_struct #(
     output logic [PW-1:0]        popcount
 );
 
-    logic [PW-1:0] popcount_r;
     logic [PW-1:0] accumulator_r;
     logic [PW-1:0] threshold_r;
     logic [PW-1:0] xnor_vals;
+    logic [PW-1:0] beat_count;
 
-    assign popcount = accumulator_r;
-    assign y = (accumulator_r >= threshold_r) ? 1'b1 : 1'b0;
+    logic [PW-1:0] out_popcount_r;
+    logic [PW-1:0] out_threshold_r;
+    logic [PW-1:0] accum_next;
+
+    assign beat_count = popcount_fn(xnor_vals);
+    assign popcount = out_popcount_r;
+    assign y = (out_popcount_r >= out_threshold_r) ? 1'b1 : 1'b0;
     assign xnor_vals = ~(x ^ w);
+    assign accum_next = acc_en ? (accumulator_r + beat_count) : accumulator_r;
 
     function automatic logic [PW-1:0] popcount_fn(
         input logic [PW-1:0] v
@@ -30,24 +36,33 @@ module neuron_struct #(
         begin
             popcount_fn = '0;
             for (i = 0; i < PW; i++) begin
-                popcount_fn = popcount_fn + v[i];
+                if(v[i]) popcount_fn++;
             end
         end
     endfunction
 
     always_ff @(posedge clk or posedge rst) begin
         if(rst) begin
-            popcount_r <= '0;
             accumulator_r <= '0;
             threshold_r <= '0;
+            out_popcount_r <= '0;
+            out_threshold_r<= '0;
         end
         else begin
             if(acc_clr) begin
-                accumulator_r <= '0;
+                out_popcount_r  <= accum_next;
+                out_threshold_r <= threshold_r;
             end
-            if(acc_en) begin
-                popcount_r <= popcount_fn(xnor_vals);
-                accumulator_r <= accumulator_r + popcount_r;
+            if(acc_clr && acc_en) begin
+                accumulator_r <= beat_count;
+                threshold_r <= threshold;
+            end
+            else if (acc_clr) begin
+                accumulator_r <= '0;
+                threshold_r <= '0;
+            end
+            else if(acc_en) begin
+                accumulator_r <= accumulator_r + beat_count;
                 threshold_r <= threshold;
             end
         end

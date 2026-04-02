@@ -47,7 +47,7 @@ module neuron_tb_depth #(
         rand int unsigned num_beats;
         rand bit [PW-1:0] x_beats[];
         rand bit [PW-1:0] w_beats[];
-        rand bit [PW-1:0] threshold;
+        rand bit [6:0] threshold;
 
         constraint c_num_beats {
             num_beats inside {[1:5]};
@@ -78,21 +78,19 @@ module neuron_tb_depth #(
     function automatic model_out_t model(
         input bit [PW-1:0] x_beats[],
         input bit [PW-1:0] w_beats[],
-        input bit [PW-1:0] threshold
+        input logic [6:0] threshold
     );
         model_out_t result;
-        logic [PW-1:0] beat_count;
         int i, j;
         begin
             result.popcount = '0;
             result.y        = 1'b0;
 
             for (i = 0; i < x_beats.size(); i++) begin
-                beat_count = '0;
                 for (j = 0; j < PW; j++) begin
-                    beat_count = beat_count + (~(x_beats[i][j] ^ w_beats[i][j]));
+                    if (!(x_beats[i][j] ^ w_beats[i][j]))
+                        result.popcount = result.popcount + 1;
                 end
-                result.popcount = result.popcount + beat_count;
             end
 
             result.y = (result.popcount >= threshold);
@@ -211,10 +209,10 @@ module neuron_tb_depth #(
                 passed++;
             end
             else begin
-                $display("FAIL time=%0t threshold=%0d actual(popcount=%0d y=%0b) expected(popcount=%0d y=%0b)",
+                $display("FAIL time=%0t threshold=%0d actual(popcount=%0d y=%0b) expected(popcount=%0d y=%0b) num_beats=%0d",
                          $time, in_txn.threshold,
                          actual.popcount, actual.y,
-                         expected.popcount, expected.y);
+                         expected.popcount, expected.y, in_txn.x_beats.size());
                 failed++;
             end
         end
@@ -222,5 +220,21 @@ module neuron_tb_depth #(
         $display("Tests completed: %0d passed, %0d failed", passed, failed);
         disable generate_clock;
     end
+
+    property p_last_to_valid_out;
+        @(posedge clk) disable iff (rst)
+        (valid_in && last) |=> !valid_out ##1 valid_out;
+    endproperty
+
+    assert property (p_last_to_valid_out)
+        else $error("valid_out was not asserted exactly 2 cycles after last");
+
+    property p_exact_two_cycle_latency;
+        @(posedge clk) disable iff (rst)
+        (valid_in && last) |-> ##1 !valid_out ##1 valid_out;
+    endproperty
+
+    assert property (p_exact_two_cycle_latency)
+        else $error("Output latency is not exactly 2 cycles");
 
 endmodule

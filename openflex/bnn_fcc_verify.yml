@@ -1,0 +1,32 @@
+mode: sim
+tool: questa
+top: bnn_fcc_tb
+clock: clk
+
+files:
+  # Add all required source files:
+  # e.g.:
+  #- ../rtl/binary_neuron.sv
+  #- ../rtl/binary_layer.sv
+  #- ../rtl/bnn.sv
+
+  # These are common to all projects.  
+  - ../rtl/bnn_fcc.sv
+  - ../verification/axi4_stream_if.sv
+  - ../verification/bnn_fcc_tb_pkg.sv
+  - ../verification/bnn_fcc_tb.sv
+
+parameters:
+  USE_CUSTOM_TOPOLOGY: [0]
+  TOGGLE_DATA_OUT_READY: [1]
+  CONFIG_VALID_PROBABILITY: [0.8]
+  DATA_IN_VALID_PROBABILITY: [0.8]
+  INPUT_DATA_WIDTH: [8]
+  INPUT_BUS_WIDTH: [64]
+  CONFIG_BUS_WIDTH: [64]
+  OUTPUT_DATA_WIDTH: [4]
+  OUTPUT_BUS_WIDTH: [8]
+  TOTAL_LAYERS: [4]
+  BASE_DIR: ["../../python"]
+
+# TODO: Make sure implementation-specific parameters have appropriate defaults in bnn_fcc_tb.sv

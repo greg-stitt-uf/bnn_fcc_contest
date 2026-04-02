@@ -1,0 +1,82 @@
+================================================================================
+BNN_FCC Coverage Plan - Student Guidance
+================================================================================
+
+This document provides high-level hints for developing comprehensive stimulus
+to exercise your BNN_FCC implementation. Think creatively about interesting
+scenarios and corner cases that stress your design.
+
+
+CATEGORY 1: AXI4-Stream Protocol Patterns
+================================================================================
+
+Configuration Interface:
+- Vary how you assert TVALID (continuous vs. intermittent vs. bursts)
+- Vary the ordering of weight/threshold messages
+- Vary the order in which layers are configured
+- Explore different layer ordering for weights vs. thresholds
+
+Image Input Interface:
+- Vary TVALID patterns during image transfers
+- Vary timing between consecutive images
+- Test with varying numbers of images (few to many)
+- Use diverse pixel values
+- Consider partial bus transfers (TKEEP)
+
+Output Interface:
+- Vary TREADY patterns (continuous vs. intermittent vs. bursts)
+- Vary when TREADY asserts relative to TVALID (before/same/after)
+- Apply backpressure scenarios
+
+
+CATEGORY 2: Configuration Data Diversity
+================================================================================
+
+Weights:
+- Vary the density of 1s vs 0s in neuron weight patterns
+- Include extreme cases and various intermediate densities
+- Use different patterns across layers
+
+Thresholds:
+- Use a range of threshold values (small, medium, large)
+- Vary threshold values across layers
+- Explore protocol fields, including don't care fields
+
+
+CATEGORY 3: Computational Stimulus
+================================================================================
+
+Classification Outputs:
+- Design inputs that produce all possible output classes
+- Test sequences with repeated vs. varying output classes
+
+
+CATEGORY 4: Configuration-Image Sequencing
+================================================================================
+
+Configuration Patterns:
+- Test full configuration (all layers)
+- Test partial reconfiguration (subset of layers)
+- Try reconfiguring weights only, thresholds only, or both
+
+
+CATEGORY 5: Reset Scenarios
+================================================================================
+
+Reset Timing:
+- Apply reset at different phases (before/during/after config, images, output)
+- Vary frequency and number of resets
+- Vary workload before reset
+- Reset on message boundaries (TLAST)
+
+Post-Reset Behavior:
+- Test with same vs. different configuration after reset
+
+
+================================================================================
+IMPLEMENTATION STRATEGY
+================================================================================
+
+- Use randomization combined with directed tests
+- Think about protocol corner cases and boundary conditions
+- Ensure diverse stimulus across all categories

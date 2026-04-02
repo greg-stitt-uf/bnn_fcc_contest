@@ -143,4 +143,7 @@ If you edited a file that the organizers also updated, Git will ask you to choos
 | **Update Your Fork** | `git push origin main` |
 
 # Submission Instructions
-Instructions for submitting the repository with your design will be explained in EEL6935 Reconfigurable Computing 2.
+
+For your submission, you must include a report.pdf that includes the timing results, area results, and verification results. Collecting these results can be done by following the instructions in the [openflex/](openflex/) folder.
+
+Additional instructions for submitting the repository with your design will be explained in EEL6935 Reconfigurable Computing 2.

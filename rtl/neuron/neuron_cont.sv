@@ -16,7 +16,7 @@ module neuron_cont # (
     logic last_r, last_r2;
 
     assign valid_out = last_r2; 
-    assign acc_clr = last_r2;
+    assign acc_clr = last_r;
 
     always_ff @(posedge clk or posedge rst) begin
         if(rst) begin
