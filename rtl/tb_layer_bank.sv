@@ -27,7 +27,7 @@ module tb_layer_bank #(
     logic [ADDR_W-1:0]      cfg_addr;
     logic [PW-1:0]          cfg_data;
 
-    logic [PN-1:0]          np_active;
+    logic [PN-1:0]          np_active = '1;
     logic [PN-1:0]          y;
     logic [PN-1:0][PW-1:0]  popcount;
     logic [PN-1:0]          valid_out;
@@ -86,7 +86,7 @@ module tb_layer_bank #(
         bit [PW-1:0] threshold[0:PN-1];  // per neuron
     } scoreboard_input_t;
 
-    typedef struct packed {
+    typedef struct {
         logic [PW-1:0] popcount[0:PN-1];
         logic          y[0:PN-1];
     } scoreboard_output_t;
