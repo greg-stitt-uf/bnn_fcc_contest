@@ -13,7 +13,7 @@ module layer_bank #(
     input  logic [PN-1:0]          np_active,
 
     input  logic                   cfg_we,
-    input  logic                   cfg_is_weight,   // 1 = weight write, 0 = threshold write
+    input  logic                   cfg_is_weight,
     input  logic [$clog2(PN)-1:0]  cfg_np_sel,
     input  logic [ADDR_W-1:0]      cfg_addr,
     input  logic [PW-1:0]          cfg_data,
@@ -25,9 +25,10 @@ module layer_bank #(
 
     logic [PN-1:0] cfg_w_we_np;
     logic [PN-1:0] cfg_t_we_np;
-    logic cfg_done;
 
-    logic remember_cfg_we;
+    logic [PN-1:0] w_written;
+    logic [PN-1:0] t_written;
+    logic [PN-1:0] cfg_done_np;
 
     genvar i;
     
@@ -43,19 +44,26 @@ module layer_bank #(
                 cfg_t_we_np[cfg_np_sel] = 1'b1;
             end
         end
-        else if(!cfg_we && remember_cfg_we) begin
-            cfg_done = 1'b1;
-        end
     end
 
     always_ff @(posedge clk or posedge rst) begin
         if (rst) begin
-            remember_cfg_we <= 1'b0;
-        end else begin
+            w_written <= '0;
+            t_written <= '0;
+        end
+        else begin
             if (cfg_we) begin
-                remember_cfg_we <= 1'b1;
+                if (cfg_is_weight) begin
+                    w_written[cfg_np_sel] <= 1'b1;
+                end
+                else begin
+                    t_written[cfg_np_sel] <= 1'b1;
+                end
             end
         end
+    end
+
+    assign cfg_done_np = w_written & t_written;
 
     generate
         for (i = 0; i < PN; i++) begin : GEN_NP
@@ -69,7 +77,7 @@ module layer_bank #(
                 .valid_in   (valid_in & np_active[i]),
                 .last       (last & np_active[i]),
 
-                .cfg_done   (cfg_done),
+                .cfg_done   (cfg_done_np[i]),
                 .cfg_w_we   (cfg_w_we_np[i]),
                 .cfg_w_addr (cfg_addr),
                 .cfg_w_data (cfg_data),
