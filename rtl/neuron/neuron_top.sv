@@ -9,6 +9,8 @@ module neuron_top #(
     input logic           last,
     input logic           valid_in,
 
+    input logic           cfg_done,
+
     input  logic         cfg_w_we,
     input  logic [ADDR_W-1:0]   cfg_w_addr,
     input  logic [PW-1:0] cfg_w_data,

@@ -25,12 +25,14 @@ module layer_bank #(
 
     logic [PN-1:0] cfg_w_we_np;
     logic [PN-1:0] cfg_t_we_np;
+    logic [PN-1:0] cfg_done_np;
 
     genvar i;
     
     always_comb begin
         cfg_w_we_np = '0;
         cfg_t_we_np = '0;
+        cfg_done_np = '0;
 
         if (cfg_we) begin
             if (cfg_is_weight) begin
@@ -54,6 +56,7 @@ module layer_bank #(
                 .valid_in   (valid_in & np_active[i]),
                 .last       (last & np_active[i]),
 
+                .cfg_done   (cfg_done_np[i])
                 .cfg_w_we   (cfg_w_we_np[i]),
                 .cfg_w_addr (cfg_addr),
                 .cfg_w_data (cfg_data),

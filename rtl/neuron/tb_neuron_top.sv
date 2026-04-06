@@ -21,6 +21,8 @@ module tb_neuron_top #(
     logic [PW-1:0] popcount;
     logic valid_out;
 
+    logic cfg_done = 1'b1;
+
     int passed, failed;
 
     logic [PW-1:0] weight_mem    [0:1023];
@@ -34,6 +36,7 @@ module tb_neuron_top #(
         .rst(rst),
         .x(x),
         .valid_in(valid_in),
+        .cfg_done(cfg_done),
         .last(last),
         .y(y),
         .popcount(popcount),

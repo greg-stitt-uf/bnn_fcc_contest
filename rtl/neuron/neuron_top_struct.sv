@@ -32,9 +32,9 @@ module neuron_top_struct #(
     logic [PW-1:0]  threshold;
 
     // Pipeline inputs to match 2-cycle BRAM latency
-    logic [PW-1:0]  x_r, x_r2;
-    logic           valid_in_r, valid_in_r2;
-    logic           last_r, last_r2;
+    logic [PW-1:0]  x_r, x_r2, x_r3, x_r4;
+    logic           valid_in_r, valid_in_r2, valid_in_r3, valid_in_r4;
+    logic           last_r, last_r2, last_r3, last_r4;
 
     always_ff @(posedge clk or posedge rst) begin
         if (rst) begin
@@ -44,6 +44,12 @@ module neuron_top_struct #(
             x_r2 <= '0;
             valid_in_r2 <= 1'b0;
             last_r2 <= 1'b0;
+            x_r3 <= '0;
+            valid_in_r3 <= 1'b0;
+            last_r3 <= 1'b0;
+            x_r4 <= '0;
+            valid_in_r4 <= 1'b0;
+            last_r4 <= 1'b0;
         end else begin
             x_r <= x;
             valid_in_r <= valid_in;
@@ -51,6 +57,12 @@ module neuron_top_struct #(
             x_r2 <= x_r;
             valid_in_r2 <= valid_in_r;
             last_r2 <= last_r;
+            x_r3 <= x_r2;
+            valid_in_r3 <= valid_in_r2;
+            last_r3 <= last_r2;
+            x_r4 <= x_r3;
+            valid_in_r4 <= valid_in_r3;
+            last_r4 <= last_r3;
         end
     end
 
