@@ -91,10 +91,10 @@ MAX_NEURON_INPUTS+1
     // result and clears the accumlator for the next neuron
     // ========================================================================
     logic [ACCUM_WIDTH-1:0] accumulator_r;  //running sum of partial popcounts 
-    logic [ACCUM_WIDTH-1:0] final_sum;      // accumlator + curr partial popcounts
-    logic valid_out_r;                      
-    logic activation_r;                 
-    logic [ACCUM_WIDTH-1:0] popcount_out_r; //raw popcount result 
+    logic [ACCUM_WIDTH-1:0] final_sum;  // accumlator + curr partial popcounts
+    logic                   valid_out_r;
+    logic                   activation_r;
+    logic [ACCUM_WIDTH-1:0] popcount_out_r;  //raw popcount result 
 
 
     //computing final sum 
@@ -113,10 +113,10 @@ MAX_NEURON_INPUTS+1
             //only is true for one cycle when we have the final result (note for simulation)
             valid_out_r <= stage_b_valid_r && stage_b_last_r;
 
-            if (stage_b_valid_r && stage_b_last_r) begin //check if this is last chunck of curr neuron
-                popcount_out_r <= final_sum; //save total popcount 
+            if (stage_b_valid_r && stage_b_last_r) begin  //check if this is last chunck of curr neuron
+                popcount_out_r <= final_sum;  //save total popcount 
                 if (OUTPUT_LAYER) begin
-                    activation_r <= 1'b0; //just pass raw popcount 
+                    activation_r <= 1'b0;  //just pass raw popcount 
                 end else begin
                     activation_r <= (final_sum >= stage_b_threshold_r);  //compare against threashold 
                     //if activation is 1 we matched enough bits 0 otherwise

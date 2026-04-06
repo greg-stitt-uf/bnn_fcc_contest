@@ -35,8 +35,8 @@ module popcount_tree #(
 
         //add pairs and tree is built 
         for (int stage = 1; stage < NUM_STAGES; stage++) begin
-            int num_elements = WIDTH >> stage;  // Number of elements at this stage
-            int prev_elements = WIDTH >> (stage - 1);
+            automatic int num_elements = WIDTH >> stage;  // Number of elements at this stage
+            automatic int prev_elements = WIDTH >> (stage - 1);
 
             for (int i = 0; i < num_elements; i++) begin
                 tree[stage][i] = tree[stage-1][2*i] + tree[stage-1][2*i+1];
