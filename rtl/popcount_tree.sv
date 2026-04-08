@@ -28,6 +28,12 @@ module popcount_tree #(
     // 2. Levels 1+: Add pairs of counts from prev level
     // 3. If we have odd numbers amount we just pass the last elem forward 
     always_comb begin
+        // Initialize entire tree to prevent X propagation
+        for (int s = 0; s < NUM_STAGES; s++) begin
+            for (int e = 0; e < WIDTH; e++) begin
+                tree[s][e] = '0;
+            end
+        end
         //each input bit is a 1-bit count and we pad to make all same size
         for (int i = 0; i < WIDTH; i++) begin
             tree[0][i] = {{(OUTPUT_WIDTH - 1) {1'b0}}, data[i]};
