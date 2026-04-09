@@ -70,7 +70,7 @@ module config_parser #(
     state_t state, next;
 
     // Header & Internal Registers
-    logic [7:0]  hdr_msgtype;
+    logic [7:0]  hdr_msgtype, hdr_layerid;
     logic [15:0] hdr_layerinputs, hdr_numneurons, hdr_bytesperneu;
     logic [31:0] hdr_totalbytes;
     logic [31:0] thresh_reg;
