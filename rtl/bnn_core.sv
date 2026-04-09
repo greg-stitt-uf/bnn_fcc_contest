@@ -30,8 +30,6 @@
 //   - cfg_ready is only high when state_r == IDLE
 //   - No weight or threshold write can reach any layer while busy
 // =============================================================================
-`default_nettype none
-
 module bnn_core #(
     parameter  int INPUTS     = 784,
     parameter  int HIDDEN1    = 256,
@@ -123,7 +121,9 @@ module bnn_core #(
     input  wire logic                         cfg_threshold_write,
     output logic                              cfg_ready
 );
-
+    // =========================================================================
+    // FSM state encoding
+    // =========================================================================
     typedef enum logic [2:0] {
         IDLE,
         LOAD_L1,
@@ -189,8 +189,11 @@ module bnn_core #(
     // bnn_core owns cfg_ready at top level and gates all writes itself.
     logic l1_cfg_ready, l2_cfg_ready, l3_cfg_ready;
 
-    logic [L1_ACT_W-1:0]       l1_activations_out;
-    logic [L2_ACT_W-1:0]       l2_activations_out;
+    // =========================================================================
+    // Layer output port wires
+    // =========================================================================
+    logic [      L1_ACT_W-1:0] l1_activations_out;
+    logic [      L2_ACT_W-1:0] l2_activations_out;
     logic [POPCOUNT_OUT_W-1:0] l3_popcounts_out;
 
     // =========================================================================
@@ -242,7 +245,7 @@ module bnn_core #(
         case (state_r)
             IDLE: begin
                 busy      = 1'b0;
-                cfg_ready = selected_cfg_ready;
+                cfg_ready = 1'b1;
             end
             LOAD_L1: l1_load = 1'b1;
             LOAD_L2: l2_load = 1'b1;
@@ -251,6 +254,9 @@ module bnn_core #(
         endcase
     end
 
+    // =========================================================================
+    // Main FSM + capture registers
+    // =========================================================================
     always_ff @(posedge clk) begin
         if (rst) begin
             state_r          <= IDLE;
@@ -310,6 +316,9 @@ module bnn_core #(
         end
     end
 
+    // =========================================================================
+    // Output assignments
+    // =========================================================================
     assign done           = done_r;
     assign popcounts_out  = l3_popcounts_r;
     assign activations_l1 = l1_activations_r;
@@ -323,10 +332,10 @@ module bnn_core #(
     // Layer 1: INPUTS -> HIDDEN1 (hidden layer)
     // -------------------------------------------------------------------------
     bnn_layer #(
-        .INPUTS(INPUTS),
-        .NEURONS(HIDDEN1),
-        .PW(PW),
-        .PN(PN),
+        .INPUTS      (INPUTS),
+        .NEURONS     (HIDDEN1),
+        .PW          (PW),
+        .PN          (PN),
         .OUTPUT_LAYER(0)
     ) u_layer1 (
         .clk                (clk),
@@ -353,10 +362,10 @@ module bnn_core #(
     // Input is l1_activations_r — captured register, never live layer output
     // -------------------------------------------------------------------------
     bnn_layer #(
-        .INPUTS(HIDDEN1),
-        .NEURONS(HIDDEN2),
-        .PW(PW),
-        .PN(PN),
+        .INPUTS      (HIDDEN1),
+        .NEURONS     (HIDDEN2),
+        .PW          (PW),
+        .PN          (PN),
         .OUTPUT_LAYER(0)
     ) u_layer2 (
         .clk                (clk),
@@ -383,10 +392,10 @@ module bnn_core #(
     // Input is l2_activations_r — captured register, never live layer output
     // -------------------------------------------------------------------------
     bnn_layer #(
-        .INPUTS(HIDDEN2),
-        .NEURONS(OUTPUTS),
-        .PW(PW),
-        .PN(PN),
+        .INPUTS      (HIDDEN2),
+        .NEURONS     (OUTPUTS),
+        .PW          (PW),
+        .PN          (PN),
         .OUTPUT_LAYER(1)
     ) u_layer3 (
         .clk                (clk),
