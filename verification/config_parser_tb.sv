@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 
-import bnn_config_pkg::*; // Uses the Golden Model class from Turn 1
+import bnn_config_pkg::*; 
 
 module config_parser_tb;
 
@@ -31,7 +31,9 @@ module config_parser_tb;
     // DUT & Golden Model
     // ---------------------------------------------------------
     bnn_config_manager #(PW, MAX_NEURONS, MAX_BEATS) dut (.*);
-    ConfigParser gold = new(PW);
+    
+    // Split declaration and instantiation to make Modelsim happy
+    ConfigParser gold;
 
     // ---------------------------------------------------------
     // Testbench Variables & Scoreboard
@@ -44,10 +46,10 @@ module config_parser_tb;
     initial begin clk = 0; forever #5 clk = ~clk; end
 
     // ---------------------------------------------------------
-    // Task: Drive AXI Stream
+    // Task: Drive AXI Stream (Made 'automatic')
     // ---------------------------------------------------------
-    task drive_stream(byte data[$]);
-        int i = 0;
+    task automatic drive_stream(ref byte data[$]);
+        int i = 0; // Now legal because the task is automatic
         while (i < data.size()) begin
             @(posedge clk);
             if (cfg_ready) begin
@@ -70,10 +72,9 @@ module config_parser_tb;
     endtask
 
     // ---------------------------------------------------------
-    // Task: Scoreboard Checker
+    // Task: Scoreboard Checker (Made 'automatic')
     // ---------------------------------------------------------
-    // This monitors the RTL outputs and compares them to the Golden Model's parsed writes
-    task check_results(int layer_id);
+    task automatic check_results(int layer_id);
         weight_write_t exp_w;
         threshold_write_t exp_t;
         
@@ -109,37 +110,44 @@ module config_parser_tb;
         end
     endtask
 
+    // Helper to push 16-byte header into the stream queue (Made 'automatic')
+    task automatic push_header(byte mtype, byte id, shortint inputs, shortint neurons, shortint bpn, int total);
+        stream_q.push_back(mtype);
+        stream_q.push_back(id);
+        stream_q.push_back(inputs[7:0]);  stream_q.push_back(inputs[15:8]);
+        stream_q.push_back(neurons[7:0]); stream_q.push_back(neurons[15:8]);
+        stream_q.push_back(bpn[7:0]);     stream_q.push_back(bpn[15:8]);
+        stream_q.push_back(total[7:0]);   stream_q.push_back(total[15:8]);
+        stream_q.push_back(total[23:16]); stream_q.push_back(total[31:24]);
+        repeat(4) stream_q.push_back(8'h00); // Reserved
+    endtask
+
     // ---------------------------------------------------------
     // Test Suites
     // ---------------------------------------------------------
     initial begin
-        // Init
+        // Initialize the class object here
+        gold = new(PW);
+
+        // Init Signals
         rst = 1; cfg_valid = 0; cfg_rdy = 1;
         repeat(5) @(posedge clk);
         rst = 0;
         
         // --- T1 & T8: Full 784 -> 256 Layer Config ---
         $display("\n=== Running T8: Full SFC Layer (784 in -> 256 neu) ===");
-        // 1. Generate Header (Weight Msg)
-        // MsgType=0, LayerID=0, Inputs=784, Neurons=256, BPN=98, Total=256*98=25088
         push_header(0, 0, 784, 256, 98, 25088);
-        // 2. Dummy Weights (All 0xAA)
         for (int i = 0; i < 25088; i++) stream_q.push_back(8'hAA);
-        // 3. Generate Header (Thresh Msg)
-        // MsgType=1, LayerID=0, Inputs=0, Neurons=256, BPN=4, Total=256*4=1024
         push_header(1, 0, 0, 256, 4, 1024);
-        // 4. Dummy Thresholds (Sequential)
         for (int i = 0; i < 256; i++) begin
-            stream_q.push_back(i[7:0]);   // LE 32-bit
+            stream_q.push_back(i[7:0]);   
             stream_q.push_back(i[15:8]);
             stream_q.push_back(8'h00);
             stream_q.push_back(8'h00);
         end
 
-        // Run Golden Model on the stream
         gold.process(stream_q);
         
-        // Drive RTL and check
         fork
             drive_stream(stream_q);
             check_results(0);
@@ -148,10 +156,8 @@ module config_parser_tb;
         // --- T4: Threshold Truncation Test ---
         $display("\n=== Running T4: Threshold Truncation ===");
         stream_q.delete();
-        // Weight Header (to set layer_inputs for truncation logic)
         push_header(0, 1, 784, 1, 98, 98);
         for (int i = 0; i < 98; i++) stream_q.push_back(8'h00);
-        // Thresh Header (Value 0xDEADBEEF should truncate to 10-bits: 0x2EF)
         push_header(1, 1, 0, 1, 4, 4);
         stream_q.push_back(8'hEF); stream_q.push_back(8'hBE);
         stream_q.push_back(8'hAD); stream_q.push_back(8'hDE);
@@ -167,17 +173,5 @@ module config_parser_tb;
         $display("========================================\n");
         $finish;
     end
-
-    // Helper to push 16-byte header into the stream queue
-    task push_header(byte mtype, byte id, shortint inputs, shortint neurons, shortint bpn, int total);
-        stream_q.push_back(mtype);
-        stream_q.push_back(id);
-        stream_q.push_back(inputs[7:0]);  stream_q.push_back(inputs[15:8]);
-        stream_q.push_back(neurons[7:0]); stream_q.push_back(neurons[15:8]);
-        stream_q.push_back(bpn[7:0]);     stream_q.push_back(bpn[15:8]);
-        stream_q.push_back(total[7:0]);   stream_q.push_back(total[15:8]);
-        stream_q.push_back(total[23:16]); stream_q.push_back(total[31:24]);
-        repeat(4) stream_q.push_back(8'h00); // Reserved
-    endtask
 
 endmodule
