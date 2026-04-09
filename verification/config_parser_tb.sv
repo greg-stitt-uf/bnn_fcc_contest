@@ -227,4 +227,11 @@ module config_parser_tb;
         $finish;
     end
 
+    initial begin
+        #5ms;
+        $fatal(1, "TB timeout: w_seen=%0d/%0d t_seen=%0d/%0d",
+            w_seen, exp_w.size(), t_seen, exp_t.size());
+    end
+
+
 endmodule
