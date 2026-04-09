@@ -24,37 +24,64 @@
 //   - popcounts_out is stable and valid whenever result_valid = 1
 //   - done is a single cycle completion pulse only
 //   - Downstream argmax must use result_valid not done
+//
+// Configuration contract:
+//   - Both cfg_write_en and cfg_threshold_write are gated by cfg_ready
+//   - cfg_ready is only high when state_r == IDLE
+//   - No weight or threshold write can reach any layer while busy
 // =============================================================================
 module bnn_core #(
-    parameter int INPUTS = 784,
-    parameter int HIDDEN1 = 256,
-    parameter int HIDDEN2 = 256,
-    parameter int OUTPUTS = 10,
-    parameter int PW = 8,
-    parameter int PN = 8,
+    parameter  int INPUTS     = 784,
+    parameter  int HIDDEN1    = 256,
+    parameter  int HIDDEN2    = 256,
+    parameter  int OUTPUTS    = 10,
+    parameter  int PW         = 8,
+    parameter  int PN         = 8,
     // -------------------------------------------------------------------------
     // Derived localparams — do not override
     // -------------------------------------------------------------------------
-    localparam int L1_COUNT_W = $clog2(INPUTS + 1),
-    localparam int L2_COUNT_W = $clog2(HIDDEN1 + 1),
-    localparam int L3_COUNT_W = $clog2(HIDDEN2 + 1),
-    localparam int THRESHOLD_W = L1_COUNT_W,
+    // Per-layer popcount and threshold widths.
+    // Each threshold must be wide enough to hold a popcount up to that
+    // layer's input count.
+    localparam int L1_COUNT_W = $clog2(INPUTS + 1),   // e.g. 784 inputs -> 10 bits
+    localparam int L2_COUNT_W = $clog2(HIDDEN1 + 1),  // e.g. 256 inputs -> 9 bits
+    localparam int L3_COUNT_W = $clog2(HIDDEN2 + 1),  // e.g. 256 inputs -> 9 bits
+
+    // Config threshold port width — explicit three-way max across all layers
+    localparam int THRESHOLD_W = (L1_COUNT_W > L2_COUNT_W) ?
+                                 (L1_COUNT_W > L3_COUNT_W ? L1_COUNT_W : L3_COUNT_W) :
+                                 (L2_COUNT_W > L3_COUNT_W ? L2_COUNT_W : L3_COUNT_W),
+
+    // Output popcount bus
     localparam int POPCOUNT_OUT_W = OUTPUTS * L3_COUNT_W,
+
+    // Inter-layer activation bus widths
     localparam int L1_ACT_W = HIDDEN1,
     localparam int L2_ACT_W = HIDDEN2,
-    localparam int MAX_NEURONS = (HIDDEN1 > HIDDEN2) ? HIDDEN1 : HIDDEN2,
-    localparam int CFG_NEURON_W = $clog2(MAX_NEURONS),
+
+    // Config neuron index width — three-way max including OUTPUTS
+    // Guard against $clog2(1)=0 producing a zero-width port
+    localparam int MAX_NEURONS  = (HIDDEN1 > HIDDEN2) ?
+                                  (HIDDEN1 > OUTPUTS ? HIDDEN1 : OUTPUTS) :
+                                  (HIDDEN2 > OUTPUTS ? HIDDEN2 : OUTPUTS),
+    localparam int CFG_NEURON_W = (MAX_NEURONS > 1) ? $clog2(MAX_NEURONS) : 1,
+
+    // Beat counts per layer
     localparam int MAX_BEATS_L1 = (INPUTS + PW - 1) / PW,
     localparam int MAX_BEATS_L2 = (HIDDEN1 + PW - 1) / PW,
     localparam int MAX_BEATS_L3 = (HIDDEN2 + PW - 1) / PW,
+
+    // Config weight address width — max across all layers
+    // Guard against $clog2(1)=0 producing a zero-width port
     localparam int MAX_WEIGHT_BEATS  = (MAX_BEATS_L1 > MAX_BEATS_L2) ?
                                        (MAX_BEATS_L1 > MAX_BEATS_L3 ? MAX_BEATS_L1 : MAX_BEATS_L3) :
                                        (MAX_BEATS_L2 > MAX_BEATS_L3 ? MAX_BEATS_L2 : MAX_BEATS_L3),
-    localparam int CFG_WEIGHT_ADDR_W = $clog2(MAX_WEIGHT_BEATS),
-    // Per-layer cfg port widths — used for truncation at layer ports
-    localparam int L1_CFG_NEURON_W = (HIDDEN1 > 1) ? $clog2(HIDDEN1) : 1,
-    localparam int L2_CFG_NEURON_W = (HIDDEN2 > 1) ? $clog2(HIDDEN2) : 1,
-    localparam int L3_CFG_NEURON_W = (OUTPUTS > 1) ? $clog2(OUTPUTS) : 1,
+    localparam int CFG_WEIGHT_ADDR_W = (MAX_WEIGHT_BEATS > 1) ? $clog2(MAX_WEIGHT_BEATS) : 1,
+
+    // Per-layer cfg port widths — used for explicit truncation at layer ports
+    localparam int L1_CFG_NEURON_W      = (HIDDEN1 > 1) ? $clog2(HIDDEN1) : 1,
+    localparam int L2_CFG_NEURON_W      = (HIDDEN2 > 1) ? $clog2(HIDDEN2) : 1,
+    localparam int L3_CFG_NEURON_W      = (OUTPUTS > 1) ? $clog2(OUTPUTS) : 1,
     localparam int L1_CFG_WEIGHT_ADDR_W = (MAX_BEATS_L1 > 1) ? $clog2(MAX_BEATS_L1) : 1,
     localparam int L2_CFG_WEIGHT_ADDR_W = (MAX_BEATS_L2 > 1) ? $clog2(MAX_BEATS_L2) : 1,
     localparam int L3_CFG_WEIGHT_ADDR_W = (MAX_BEATS_L3 > 1) ? $clog2(MAX_BEATS_L3) : 1
@@ -71,12 +98,19 @@ module bnn_core #(
     output logic                              result_valid,
     // -------------------------------------------------------------------------
     // Result outputs
+    // popcounts_out is stable and valid whenever result_valid = 1
+    // activations_l1 and activations_l2 are debug visibility only
     // -------------------------------------------------------------------------
     output logic      [   POPCOUNT_OUT_W-1:0] popcounts_out,
     output logic      [         L1_ACT_W-1:0] activations_l1,
     output logic      [         L2_ACT_W-1:0] activations_l2,
     // -------------------------------------------------------------------------
-    // Configuration interface
+    // Configuration interface — only active when cfg_ready = 1
+    // Both cfg_write_en and cfg_threshold_write are gated by cfg_ready
+    // in hardware so no write of any kind can reach a layer while busy.
+    // cfg_layer_sel: 2'b00=layer1, 2'b01=layer2, 2'b10=layer3
+    // cfg_threshold_data is THRESHOLD_W wide (widest layer).
+    // Each layer truncates to its own count width at instantiation.
     // -------------------------------------------------------------------------
     input  wire logic                         cfg_write_en,
     input  wire logic [                  1:0] cfg_layer_sel,
@@ -101,24 +135,59 @@ module bnn_core #(
         DONE
     } state_t;
 
-    state_t                      state_r;
-    state_t                      state_prev_r;
-    logic                        done_r;
+    state_t state_r;  // current FSM state — type state_t not logic[2:0]
+    state_t state_prev_r;  // previous state — same type, used for entry pulses
+    logic   done_r;  // registered done pulse
+
+    // =========================================================================
+    // Post-reset stability flag
+    // =========================================================================
+    // Used to suppress $stable assertions for one cycle after reset releases.
+    // Without this, the transition from X/0 during reset to stable 0 after
+    // reset deassertion can cause false assertion failures in simulation.
+    // Intentionally combinational: combines registered rst_prev_r with live
+    // rst input to produce a one-cycle-wide strobe on the falling edge of rst.
+    // =========================================================================
+    logic   rst_prev_r;
+    logic   post_reset_cycle;
+
+    always_ff @(posedge clk) begin
+        rst_prev_r <= rst;
+    end
+
+    // post_reset_cycle is combinational by design — it must be high on the
+    // exact cycle that rst falls so assertions are suppressed before any
+    // always_ff block has a chance to update its outputs
+    assign post_reset_cycle = rst_prev_r && !rst;
 
     // =========================================================================
     // Inter-layer capture registers
     // =========================================================================
-    logic   [      L1_ACT_W-1:0] l1_activations_r;
-    logic   [      L2_ACT_W-1:0] l2_activations_r;
-    logic   [POPCOUNT_OUT_W-1:0] l3_popcounts_r;
+    // Latched on each layer's done pulse. Never wired directly from live
+    // layer output ports. Stable whenever result_valid = 1.
+    // Reset clears these but weights/thresholds inside bnn_layer are preserved.
+    // =========================================================================
+    logic [      L1_ACT_W-1:0] l1_activations_r;
+    logic [      L2_ACT_W-1:0] l2_activations_r;
+    logic [POPCOUNT_OUT_W-1:0] l3_popcounts_r;
 
     // =========================================================================
-    // Layer control wires
+    // Layer control signals
     // =========================================================================
     logic l1_load, l2_load, l3_load;
     logic l1_start_pulse, l2_start_pulse, l3_start_pulse;
     logic l1_done, l2_done, l3_done;
+
+    // Declared unconditionally so port connections are always legal.
+    // l*_busy and l*_output_valid are used only in assertions.
+    // Synthesis will optimize away these signals since nothing in the
+    // synthesizable logic depends on them.
     logic l1_busy, l2_busy, l3_busy;
+    logic l1_output_valid, l2_output_valid, l3_output_valid;
+
+    // Layer cfg_ready — connected for assertion visibility.
+    // bnn_core owns cfg_ready at top level and gates all writes itself.
+    logic l1_cfg_ready, l2_cfg_ready, l3_cfg_ready;
 
     // =========================================================================
     // Layer output port wires
@@ -130,16 +199,29 @@ module bnn_core #(
     // =========================================================================
     // Configuration routing
     // =========================================================================
+    // Both cfg_write_en and cfg_threshold_write are gated by cfg_ready and
+    // cfg_layer_sel so no write of any kind can reach any layer while busy.
+    // This enforces the config contract in hardware not just assertions.
+    // =========================================================================
     logic l1_cfg_write_en, l2_cfg_write_en, l3_cfg_write_en;
+    logic l1_cfg_thresh_write, l2_cfg_thresh_write, l3_cfg_thresh_write;
 
     always_comb begin
-        l1_cfg_write_en = cfg_write_en && cfg_ready && (cfg_layer_sel == 2'd0);
-        l2_cfg_write_en = cfg_write_en && cfg_ready && (cfg_layer_sel == 2'd1);
-        l3_cfg_write_en = cfg_write_en && cfg_ready && (cfg_layer_sel == 2'd2);
+        l1_cfg_write_en     = cfg_write_en && cfg_ready && (cfg_layer_sel == 2'd0);
+        l2_cfg_write_en     = cfg_write_en && cfg_ready && (cfg_layer_sel == 2'd1);
+        l3_cfg_write_en     = cfg_write_en && cfg_ready && (cfg_layer_sel == 2'd2);
+        l1_cfg_thresh_write = cfg_threshold_write && cfg_ready && (cfg_layer_sel == 2'd0);
+        l2_cfg_thresh_write = cfg_threshold_write && cfg_ready && (cfg_layer_sel == 2'd1);
+        l3_cfg_thresh_write = cfg_threshold_write && cfg_ready && (cfg_layer_sel == 2'd2);
     end
 
     // =========================================================================
     // One-shot start pulse generation
+    // =========================================================================
+    // Entry into each RUN state detected by comparing state_r to state_prev_r.
+    // Both are type state_t so width tracks enum changes automatically.
+    // Keeps start generation fully inside bnn_core with no dependence on
+    // l*_busy timing from the layer instances.
     // =========================================================================
     always_comb begin
         l1_start_pulse = (state_r == RUN_L1) && (state_prev_r != RUN_L1);
@@ -149,6 +231,9 @@ module bnn_core #(
 
     // =========================================================================
     // Control signal decode
+    // =========================================================================
+    // Pure combinational from state_r with explicit defaults to prevent
+    // latch inference.
     // =========================================================================
     always_comb begin
         l1_load   = 1'b0;
@@ -243,6 +328,9 @@ module bnn_core #(
     // Layer instantiation
     // =========================================================================
 
+    // -------------------------------------------------------------------------
+    // Layer 1: INPUTS -> HIDDEN1 (hidden layer)
+    // -------------------------------------------------------------------------
     bnn_layer #(
         .INPUTS      (INPUTS),
         .NEURONS     (HIDDEN1),
@@ -257,7 +345,7 @@ module bnn_core #(
         .start              (l1_start_pulse),
         .done               (l1_done),
         .busy               (l1_busy),
-        .output_valid       (),
+        .output_valid       (l1_output_valid),
         .activations_out    (l1_activations_out),
         .popcounts_out      (),
         .cfg_write_en       (l1_cfg_write_en),
@@ -265,10 +353,14 @@ module bnn_core #(
         .cfg_weight_addr    (cfg_weight_addr[L1_CFG_WEIGHT_ADDR_W-1:0]),
         .cfg_weight_data    (cfg_weight_data),
         .cfg_threshold_data (cfg_threshold_data[L1_COUNT_W-1:0]),
-        .cfg_threshold_write(cfg_threshold_write),
-        .cfg_ready          ()
+        .cfg_threshold_write(l1_cfg_thresh_write),
+        .cfg_ready          (l1_cfg_ready)
     );
 
+    // -------------------------------------------------------------------------
+    // Layer 2: HIDDEN1 -> HIDDEN2 (hidden layer)
+    // Input is l1_activations_r — captured register, never live layer output
+    // -------------------------------------------------------------------------
     bnn_layer #(
         .INPUTS      (HIDDEN1),
         .NEURONS     (HIDDEN2),
@@ -283,7 +375,7 @@ module bnn_core #(
         .start              (l2_start_pulse),
         .done               (l2_done),
         .busy               (l2_busy),
-        .output_valid       (),
+        .output_valid       (l2_output_valid),
         .activations_out    (l2_activations_out),
         .popcounts_out      (),
         .cfg_write_en       (l2_cfg_write_en),
@@ -291,10 +383,14 @@ module bnn_core #(
         .cfg_weight_addr    (cfg_weight_addr[L2_CFG_WEIGHT_ADDR_W-1:0]),
         .cfg_weight_data    (cfg_weight_data),
         .cfg_threshold_data (cfg_threshold_data[L2_COUNT_W-1:0]),
-        .cfg_threshold_write(cfg_threshold_write),
-        .cfg_ready          ()
+        .cfg_threshold_write(l2_cfg_thresh_write),
+        .cfg_ready          (l2_cfg_ready)
     );
 
+    // -------------------------------------------------------------------------
+    // Layer 3: HIDDEN2 -> OUTPUTS (output layer, no thresholding)
+    // Input is l2_activations_r — captured register, never live layer output
+    // -------------------------------------------------------------------------
     bnn_layer #(
         .INPUTS      (HIDDEN2),
         .NEURONS     (OUTPUTS),
@@ -309,7 +405,7 @@ module bnn_core #(
         .start              (l3_start_pulse),
         .done               (l3_done),
         .busy               (l3_busy),
-        .output_valid       (),
+        .output_valid       (l3_output_valid),
         .activations_out    (),
         .popcounts_out      (l3_popcounts_out),
         .cfg_write_en       (l3_cfg_write_en),
@@ -317,8 +413,8 @@ module bnn_core #(
         .cfg_weight_addr    (cfg_weight_addr[L3_CFG_WEIGHT_ADDR_W-1:0]),
         .cfg_weight_data    (cfg_weight_data),
         .cfg_threshold_data (cfg_threshold_data[L3_COUNT_W-1:0]),
-        .cfg_threshold_write(cfg_threshold_write),
-        .cfg_ready          ()
+        .cfg_threshold_write(l3_cfg_thresh_write),
+        .cfg_ready          (l3_cfg_ready)
     );
 
     // =========================================================================
@@ -327,102 +423,166 @@ module bnn_core #(
     // synthesis translate_off
 
     // FSM transition correctness
+    p_fsm_idle_to_load_l1 :
     assert property (@(posedge clk) disable iff (rst) (state_r == IDLE && start) |=> (state_r == LOAD_L1))
     else $error("FSM: IDLE+start did not transition to LOAD_L1");
 
+    p_fsm_load_l1_to_run_l1 :
     assert property (@(posedge clk) disable iff (rst) (state_r == LOAD_L1) |=> (state_r == RUN_L1))
     else $error("FSM: LOAD_L1 did not transition to RUN_L1");
 
+    p_fsm_run_l1_to_load_l2 :
     assert property (@(posedge clk) disable iff (rst) (state_r == RUN_L1 && l1_done) |=> (state_r == LOAD_L2))
     else $error("FSM: RUN_L1+l1_done did not transition to LOAD_L2");
 
+    p_fsm_load_l2_to_run_l2 :
     assert property (@(posedge clk) disable iff (rst) (state_r == LOAD_L2) |=> (state_r == RUN_L2))
     else $error("FSM: LOAD_L2 did not transition to RUN_L2");
 
+    p_fsm_run_l2_to_load_l3 :
     assert property (@(posedge clk) disable iff (rst) (state_r == RUN_L2 && l2_done) |=> (state_r == LOAD_L3))
     else $error("FSM: RUN_L2+l2_done did not transition to LOAD_L3");
 
+    p_fsm_load_l3_to_run_l3 :
     assert property (@(posedge clk) disable iff (rst) (state_r == LOAD_L3) |=> (state_r == RUN_L3))
     else $error("FSM: LOAD_L3 did not transition to RUN_L3");
 
+    p_fsm_run_l3_to_done :
     assert property (@(posedge clk) disable iff (rst) (state_r == RUN_L3 && l3_done) |=> (state_r == DONE))
     else $error("FSM: RUN_L3+l3_done did not transition to DONE");
 
+    p_fsm_done_to_idle :
     assert property (@(posedge clk) disable iff (rst) (state_r == DONE) |=> (state_r == IDLE))
     else $error("FSM: DONE did not transition to IDLE");
 
     // Layer done pulses only arrive in correct FSM state
+    p_l1_done_in_run_l1 :
     assert property (@(posedge clk) disable iff (rst) l1_done |-> (state_r == RUN_L1))
     else $error("l1_done arrived outside RUN_L1");
 
+    p_l2_done_in_run_l2 :
     assert property (@(posedge clk) disable iff (rst) l2_done |-> (state_r == RUN_L2))
     else $error("l2_done arrived outside RUN_L2");
 
+    p_l3_done_in_run_l3 :
     assert property (@(posedge clk) disable iff (rst) l3_done |-> (state_r == RUN_L3))
     else $error("l3_done arrived outside RUN_L3");
 
     // Never start a layer that is already busy
+    p_l1_start_not_busy :
     assert property (@(posedge clk) disable iff (rst) l1_start_pulse |-> !l1_busy)
     else $error("l1_start_pulse fired while l1_busy");
 
+    p_l2_start_not_busy :
     assert property (@(posedge clk) disable iff (rst) l2_start_pulse |-> !l2_busy)
     else $error("l2_start_pulse fired while l2_busy");
 
+    p_l3_start_not_busy :
     assert property (@(posedge clk) disable iff (rst) l3_start_pulse |-> !l3_busy)
     else $error("l3_start_pulse fired while l3_busy");
 
     // Never assert load and start together for same layer
+    p_no_l1_load_and_start :
     assert property (@(posedge clk) disable iff (rst) !(l1_load && l1_start_pulse))
     else $error("l1_load and l1_start_pulse asserted same cycle");
 
+    p_no_l2_load_and_start :
     assert property (@(posedge clk) disable iff (rst) !(l2_load && l2_start_pulse))
     else $error("l2_load and l2_start_pulse asserted same cycle");
 
+    p_no_l3_load_and_start :
     assert property (@(posedge clk) disable iff (rst) !(l3_load && l3_start_pulse))
     else $error("l3_load and l3_start_pulse asserted same cycle");
 
     // Only one layer starts at a time
+    p_onehot_start_pulses :
     assert property (@(posedge clk) disable iff (rst) $onehot0(
         {l1_start_pulse, l2_start_pulse, l3_start_pulse}
     ))
     else $error("Multiple layer start pulses asserted same cycle");
 
-    // done only pulses from DONE state — check previous state since
-    // done_r is registered and state_r has already moved to IDLE
+    // done only pulses when previous state was DONE
+    // done_r is registered so state_r has already moved to IDLE when done fires
+    p_done_from_done_state :
     assert property (@(posedge clk) disable iff (rst) done |-> (state_prev_r == DONE))
     else $error("done asserted outside DONE state");
 
-    // Internal gated cfg enables only fire when cfg_ready
+    // Internal gated cfg write enables only fire when cfg_ready
+    p_l1_cfg_write_gated :
     assert property (@(posedge clk) disable iff (rst) l1_cfg_write_en |-> cfg_ready)
     else $error("l1_cfg_write_en fired while not cfg_ready");
 
+    p_l2_cfg_write_gated :
     assert property (@(posedge clk) disable iff (rst) l2_cfg_write_en |-> cfg_ready)
     else $error("l2_cfg_write_en fired while not cfg_ready");
 
+    p_l3_cfg_write_gated :
     assert property (@(posedge clk) disable iff (rst) l3_cfg_write_en |-> cfg_ready)
     else $error("l3_cfg_write_en fired while not cfg_ready");
 
+    // Internal gated threshold write enables only fire when cfg_ready
+    p_l1_cfg_thresh_gated :
+    assert property (@(posedge clk) disable iff (rst) l1_cfg_thresh_write |-> cfg_ready)
+    else $error("l1_cfg_thresh_write fired while not cfg_ready");
+
+    p_l2_cfg_thresh_gated :
+    assert property (@(posedge clk) disable iff (rst) l2_cfg_thresh_write |-> cfg_ready)
+    else $error("l2_cfg_thresh_write fired while not cfg_ready");
+
+    p_l3_cfg_thresh_gated :
+    assert property (@(posedge clk) disable iff (rst) l3_cfg_thresh_write |-> cfg_ready)
+    else $error("l3_cfg_thresh_write fired while not cfg_ready");
+
     // result_valid clears one cycle after accepted start
+    p_result_valid_clears_on_start :
     assert property (@(posedge clk) disable iff (rst) (state_r == IDLE && start) |=> !result_valid)
     else $error("result_valid did not clear after start");
 
-    // result_valid only asserted after at least one completed inference
+    // result_valid only asserted in IDLE or DONE
+    p_result_valid_state :
     assert property (@(posedge clk) disable iff (rst) result_valid |-> (state_r == IDLE || state_r == DONE))
     else $error("result_valid asserted in unexpected state");
 
     // start while busy must not cause a new LOAD_L1 entry
+    p_start_busy_no_load_l1 :
     assert property (@(posedge clk) disable iff (rst) (start && busy) |=> (state_r != LOAD_L1))
     else $error("Spurious LOAD_L1 entered after start-while-busy");
 
+    // Layer cfg_ready signals must agree with core cfg_ready
+    // All three layers are always co-idle with the core FSM
+    p_l1_cfg_ready_agrees :
+    assert property (@(posedge clk) disable iff (rst) cfg_ready |-> l1_cfg_ready)
+    else $error("cfg_ready high but l1_cfg_ready low");
+
+    p_l2_cfg_ready_agrees :
+    assert property (@(posedge clk) disable iff (rst) cfg_ready |-> l2_cfg_ready)
+    else $error("cfg_ready high but l2_cfg_ready low");
+
+    p_l3_cfg_ready_agrees :
+    assert property (@(posedge clk) disable iff (rst) cfg_ready |-> l3_cfg_ready)
+    else $error("cfg_ready high but l3_cfg_ready low");
+
     // Capture registers only change on matching done pulse or reset
-    assert property (@(posedge clk) disable iff (rst) !l1_done |=> $stable(l1_activations_r))
+    // post_reset_cycle suppresses false fires on the cycle after reset releases
+    p_l1_capture_stable :
+    assert property (@(posedge clk) disable iff (rst || post_reset_cycle) !l1_done |=> $stable(
+        l1_activations_r
+    ))
     else $error("l1_activations_r changed without l1_done");
 
-    assert property (@(posedge clk) disable iff (rst) !l2_done |=> $stable(l2_activations_r))
+    p_l2_capture_stable :
+    assert property (@(posedge clk) disable iff (rst || post_reset_cycle) !l2_done |=> $stable(
+        l2_activations_r
+    ))
     else $error("l2_activations_r changed without l2_done");
 
-    assert property (@(posedge clk) disable iff (rst) !l3_done |=> $stable(l3_popcounts_r))
+    p_l3_capture_stable :
+    assert property (@(posedge clk) disable iff (rst || post_reset_cycle) !l3_done |=> $stable(
+        l3_popcounts_r
+    ))
     else $error("l3_popcounts_r changed without l3_done");
+
+    // synthesis translate_on
 
 endmodule
 `default_nettype wire
