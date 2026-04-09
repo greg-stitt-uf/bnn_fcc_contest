@@ -3,29 +3,31 @@ module bnn_layer_tb;
     //==========================================================================
     // Parameters
     //==========================================================================
-    localparam int INPUTS = 784;
+    localparam int INPUTS  = 784;
     localparam int NEURONS = 256;
-    localparam int PW = 16;
-    localparam int PN = 8;
-    localparam int BEATS = 49;
-    localparam int COUNT_W = 10;
-    localparam int NEURON_GROUPS = 32;
-    localparam int WEIGHT_DEPTH = 1568;
+    localparam int PW      = 8;
+    localparam int PN      = 8;
+
+    localparam int BEATS         = (INPUTS + PW - 1) / PW;
+    localparam int COUNT_W       = $clog2(INPUTS + 1);
+    localparam int NEURON_GROUPS = (NEURONS + PN - 1) / PN;
+    localparam int WEIGHT_DEPTH  = BEATS * NEURON_GROUPS;
+    localparam int CFG_NIDX_W    = (NEURONS > 1) ? $clog2(NEURONS) : 1;
+    localparam int CFG_ADDR_W    = (BEATS > 1) ? $clog2(BEATS) : 1;
 
     //==========================================================================
     // DUT Signals
     //==========================================================================
     logic clk, rst, load, start, done, busy, valid;
-    logic [         INPUTS-1:0] inp;
-    logic [        NEURONS-1:0] act;
+    logic [INPUTS-1:0]          inp;
+    logic [NEURONS-1:0]         act;
     logic [NEURONS*COUNT_W-1:0] pop;
+
     logic cfg_we, cfg_tw, cfg_rdy;
-    //logic [        7:0] cfg_nidx;
-    //logic [        5:0] cfg_addr;
-    logic [$clog2(NEURONS)-1:0] cfg_nidx;
-    logic [$clog2((INPUTS + PW - 1) / PW)-1:0] cfg_addr;
-    logic [     PW-1:0] cfg_wdata;
-    logic [COUNT_W-1:0] cfg_tdata;
+    logic [CFG_NIDX_W-1:0] cfg_nidx;
+    logic [CFG_ADDR_W-1:0] cfg_addr;
+    logic [PW-1:0]         cfg_wdata;
+    logic [COUNT_W-1:0]    cfg_tdata;
 
     //==========================================================================
     // Configuration Storage
@@ -185,12 +187,12 @@ module bnn_layer_tb;
 
         $display("[%0t] Depositing zeros to all memories...", $time);
         for (int np = 0; np < PN; np++)
-            for (int addr = 0; addr < WEIGHT_DEPTH; addr++) $deposit(dut.weight_rams[np][addr], 16'h0000);
+            for (int addr = 0; addr < WEIGHT_DEPTH; addr++) $deposit(dut.weight_rams[np][addr], '0);
 
         for (int np = 0; np < PN; np++)
-            for (int grp = 0; grp < NEURON_GROUPS; grp++) $deposit(dut.threshold_rams[np][grp], 10'h000);
+            for (int grp = 0; grp < NEURON_GROUPS; grp++) $deposit(dut.threshold_rams[np][grp], '0);
 
-        for (int b = 0; b < BEATS; b++) $deposit(dut.input_buffer[b], 16'h0000);
+        for (int b = 0; b < BEATS; b++) $deposit(dut.input_buffer[b], '0);
 
         $display("[%0t] Memory initialization complete", $time);
         repeat (10) @(posedge clk);
@@ -236,14 +238,20 @@ module bnn_layer_tb;
         while (!cfg_rdy) @(posedge clk);
         for (int n = 0; n < NEURONS; n++) begin
             @(posedge clk);
-            cfg_we    = 1;
+            cfg_we    = 0;
             cfg_tw    = 1;
             cfg_nidx  = n;
+            cfg_addr  = '0;
+            cfg_wdata = '0;
             cfg_tdata = cfg_data.thresholds[n];
         end
         @(posedge clk);
-        cfg_we = 0;
-        cfg_tw = 0;
+        cfg_we    = 0;
+        cfg_tw    = 0;
+        cfg_nidx  = '0;
+        cfg_addr  = '0;
+        cfg_wdata = '0;
+        cfg_tdata = '0;
         repeat (10) @(posedge clk);
         $display("[%0t] Threshold configuration complete", $time);
     endtask
