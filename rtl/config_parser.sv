@@ -6,6 +6,7 @@ module config_parser #(
     parameter int NEURONS         = 256,
     parameter int PW              = 8,
 
+    // Match bnn_layer-style derived parameters
     parameter int COUNT_WIDTH           = $clog2(INPUTS + 1),
     parameter int INPUT_BEATS           = (INPUTS + PW - 1) / PW,
     parameter int CFG_NEURON_WIDTH      = (NEURONS > 1) ? $clog2(NEURONS) : 1,
@@ -48,9 +49,10 @@ module config_parser #(
         integer i;
         begin
             calc_countw = 6'd1;
-            for (i = 1; i < 32; i = i + 1)
+            for (i = 1; i < 32; i = i + 1) begin
                 if ((1 << i) >= (n_inputs + 1))
                     calc_countw = i[5:0];
+            end
         end
     endfunction
 
@@ -64,6 +66,7 @@ module config_parser #(
                 mask32 = 32'hFFFF_FFFF;
             else
                 mask32 = (32'd1 << cw) - 1;
+
             trunc_thresh = raw[COUNT_WIDTH-1:0] & mask32[COUNT_WIDTH-1:0];
         end
     endfunction
@@ -131,22 +134,42 @@ module config_parser #(
     logic [31:0] thresh_reg;
     logic [1:0]  thresh_byte_cnt;
 
+    // ------------------------------------------------------------------
+    // DECODE combinational values
+    // FIX: use header-derived combinational signals in DECODE next-state,
+    // not target_msg/beats/countw regs written in the same cycle.
+    // ------------------------------------------------------------------
+    logic        dec_target_msg;
+    logic [15:0] dec_beats_per_neu;
+    logic [5:0]  dec_countw;
+
+    assign dec_target_msg    = (hdr_layerid == TARGET_LAYER_ID[7:0]);
+    assign dec_beats_per_neu = (hdr_layerinputs + PW - 1) / PW;
+    assign dec_countw        = calc_countw(hdr_layerinputs);
+
+    // ------------------------------------------------------------------
+    // Sequential state + datapath
+    // ------------------------------------------------------------------
     always_ff @(posedge clk) begin
         if (rst) begin
             state              <= IDLE;
+
             hdr_msgtype        <= '0;
             hdr_layerid        <= '0;
             hdr_layerinputs    <= '0;
             hdr_numneurons     <= '0;
             hdr_bytesperneu    <= '0;
             hdr_totalbytes     <= '0;
+
             hdr_byte_cnt       <= '0;
             payload_bytes_left <= '0;
+
             cur_neuron         <= '0;
             cur_beat           <= '0;
             beats_per_neu_msg  <= '0;
             msg_countw         <= '0;
             target_msg         <= 1'b0;
+
             weight_byte_q      <= '0;
             thresh_reg         <= '0;
             thresh_byte_cnt    <= '0;
@@ -190,9 +213,9 @@ module config_parser #(
 
                 DECODE: begin
                     payload_bytes_left <= hdr_totalbytes;
-                    beats_per_neu_msg  <= (hdr_layerinputs + PW - 1) / PW;
-                    msg_countw         <= calc_countw(hdr_layerinputs);
-                    target_msg         <= (hdr_layerid == TARGET_LAYER_ID[7:0]);
+                    beats_per_neu_msg  <= dec_beats_per_neu;
+                    msg_countw         <= dec_countw;
+                    target_msg         <= dec_target_msg;
                     cur_neuron         <= '0;
                     cur_beat           <= '0;
                     thresh_reg         <= '0;
@@ -248,6 +271,9 @@ module config_parser #(
         end
     end
 
+    // ------------------------------------------------------------------
+    // Combinational control
+    // ------------------------------------------------------------------
     always_comb begin
         next       = state;
         byte_rd_en = 1'b0;
@@ -274,7 +300,7 @@ module config_parser #(
             end
 
             DECODE: begin
-                if (!target_msg)
+                if (!dec_target_msg)
                     next = SKIP_PAYLOAD;
                 else if (hdr_msgtype == 8'd0)
                     next = RECV_W_BYTES;
