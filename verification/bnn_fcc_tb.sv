@@ -89,7 +89,7 @@ module bnn_fcc_tb #(
     parameter int      CUSTOM_TOPOLOGY          [CUSTOM_LAYERS] = '{8, 8, 8, 8},
     parameter int      NUM_TEST_IMAGES                          = 50,
     parameter bit      VERIFY_MODEL                             = 1,
-    parameter string   BASE_DIR                                 = "../python",
+    parameter string   BASE_DIR                                 = "/python",
     parameter bit      TOGGLE_DATA_OUT_READY                    = 1'b1,
     parameter real     CONFIG_VALID_PROBABILITY                 = 0.8,
     parameter real     DATA_IN_VALID_PROBABILITY                = 0.8,
