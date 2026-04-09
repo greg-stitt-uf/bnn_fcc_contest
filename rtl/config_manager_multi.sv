@@ -61,6 +61,9 @@ module config_manager_multi #(
     input  wire logic                          out_cfg_ready
 );
 
+    localparam int CFG_KEEP_W = CONFIG_BUS_WIDTH / 8;
+    localparam int BEAT_PTR_W = (CFG_KEEP_W > 1) ? $clog2(CFG_KEEP_W) : 1;
+
     typedef enum logic [2:0] {
         ST_IDLE,
         ST_RECV_HEADER,
@@ -74,10 +77,10 @@ module config_manager_multi #(
 
     state_t state, next;
 
-    logic [63:0] beat_data_q;
-    logic [7:0]  beat_keep_q;
-    logic [2:0]  beat_ptr_q;
-    logic        beat_empty_q;
+    logic [CONFIG_BUS_WIDTH-1:0] beat_data_q;
+    logic [CFG_KEEP_W-1:0]       beat_keep_q;
+    logic [BEAT_PTR_W-1:0]       beat_ptr_q;
+    logic                        beat_empty_q;
 
     logic [7:0]  byte_out;
     logic        byte_valid;
@@ -104,19 +107,12 @@ module config_manager_multi #(
     logic [31:0] trunc_mask;
     logic [31:0] trunc_thresh;
 
-    always_comb begin
-        case (beat_ptr_q)
-            3'd0: byte_out = beat_data_q[7:0];
-            3'd1: byte_out = beat_data_q[15:8];
-            3'd2: byte_out = beat_data_q[23:16];
-            3'd3: byte_out = beat_data_q[31:24];
-            3'd4: byte_out = beat_data_q[39:32];
-            3'd5: byte_out = beat_data_q[47:40];
-            3'd6: byte_out = beat_data_q[55:48];
-            default: byte_out = beat_data_q[63:56];
-        endcase
+    initial begin
+        assert ((CONFIG_BUS_WIDTH % 8) == 0)
+        else $fatal(1, "CONFIG_BUS_WIDTH must be a multiple of 8");
     end
 
+    assign byte_out   = beat_data_q[8*beat_ptr_q +: 8];
     assign byte_valid = (!beat_empty_q) && beat_keep_q[beat_ptr_q];
     assign cfg_ready  = beat_empty_q;
 
@@ -131,15 +127,15 @@ module config_manager_multi #(
                 if (cfg_valid) begin
                     beat_data_q  <= cfg_data;
                     beat_keep_q  <= cfg_keep;
-                    beat_ptr_q   <= 3'd0;
-                    beat_empty_q <= (cfg_keep == 8'h00);
+                    beat_ptr_q   <= '0;
+                    beat_empty_q <= (cfg_keep == '0);
                 end
             end else begin
                 if (!beat_keep_q[beat_ptr_q] || byte_rd_en) begin
-                    if (beat_ptr_q == 3'd7)
+                    if (beat_ptr_q == CFG_KEEP_W-1)
                         beat_empty_q <= 1'b1;
                     else
-                        beat_ptr_q <= beat_ptr_q + 3'd1;
+                        beat_ptr_q <= beat_ptr_q + 1'b1;
                 end
             end
         end
@@ -216,8 +212,8 @@ module config_manager_multi #(
                 ST_RECV_HEADER: begin
                     if (byte_valid && byte_rd_en) begin
                         case (hdr_byte_cnt)
-                            4'd0:  hdr_msgtype         <= byte_out;
-                            4'd1:  hdr_layerid         <= byte_out;
+                            4'd0:  hdr_msgtype            <= byte_out;
+                            4'd1:  hdr_layerid            <= byte_out;
                             4'd2:  hdr_layerinputs[7:0]   <= byte_out;
                             4'd3:  hdr_layerinputs[15:8]  <= byte_out;
                             4'd4:  hdr_numneurons[7:0]    <= byte_out;
@@ -296,13 +292,13 @@ module config_manager_multi #(
         next = state;
         byte_rd_en = 1'b0;
 
-        out_cfg_write_en       = 1'b0;
-        out_cfg_layer_sel      = active_layer_sel;
-        out_cfg_neuron_idx     = cur_neuron;
-        out_cfg_weight_addr    = cur_beat;
-        out_cfg_weight_data    = weight_byte_q[PW-1:0];
-        out_cfg_threshold_data = trunc_thresh[THRESHOLD_W-1:0];
-        out_cfg_threshold_write= 1'b0;
+        out_cfg_write_en        = 1'b0;
+        out_cfg_layer_sel       = active_layer_sel;
+        out_cfg_neuron_idx      = cur_neuron;
+        out_cfg_weight_addr     = cur_beat;
+        out_cfg_weight_data     = weight_byte_q[PW-1:0];
+        out_cfg_threshold_data  = trunc_thresh[THRESHOLD_W-1:0];
+        out_cfg_threshold_write = 1'b0;
 
         case (state)
             ST_IDLE: begin
