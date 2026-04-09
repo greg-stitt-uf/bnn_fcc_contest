@@ -7,16 +7,19 @@ module shift_reg #(
     input  logic                  shift_in_valid,
     input  logic [(WIDTH/8)-1:0]  shift_in_keep,
     input  logic [WIDTH-1:0]      shift_in_data,
+    input  logic                  shift_in_last,
     output logic                  shift_in_ready,
     output logic                  shift_out_valid,
     output logic [WIDTH-1:0]      shift_out_data,
     output logic [(WIDTH/8-1):0]  shift_out_keep,
+    output logic                  shift_out_last,
     input  logic                  shift_out_ready
 );
     localparam int COUNT_W = $clog2(DEPTH+1);
 
     logic [WIDTH-1:0] fifo[DEPTH-1:0];
     logic [(WIDTH/8)-1:0] fifo_keep[DEPTH-1:0];
+    logic fifo_last[DEPTH-1:0];
     logic [COUNT_W-1:0] count;
     logic [WIDTH-1:0] masked_in_data;
     logic push;
@@ -42,9 +45,11 @@ module shift_reg #(
     always_comb begin
         shift_out_data = '0;
         shift_out_keep = '0;
+        shift_out_last = 1'b0;
         if (count > 0) begin
             shift_out_data = fifo[count-1];
             shift_out_keep = fifo_keep[count-1];
+            shift_out_last = fifo_last[count-1];
         end
     end
 
@@ -54,15 +59,18 @@ module shift_reg #(
             for (int i = 0; i < DEPTH; i++) begin
                 fifo[i] <= '0;
                 fifo_keep[i] <= '0;
+                fifo_last[i] <= 1'b0;
             end
         end else begin
             if (push) begin
                 for (int i = DEPTH-1; i > 0; i--) begin
                     fifo[i] <= fifo[i-1];
                     fifo_keep[i] <= fifo_keep[i-1];
+                    fifo_last[i] <= fifo_last[i-1];
                 end
                 fifo[0] <= masked_in_data;
                 fifo_keep[0] <= shift_in_keep;
+                fifo_last[0] <= shift_in_last;
             end
 
             case ({push, pop})
