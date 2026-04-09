@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps
 
 module config_manager_multi_tb;
-    import bnn_config_golden_pkg::*;
+    import bnn_config_pkg::*;
 
     localparam int CONFIG_BUS_WIDTH = 64;
     localparam int PW               = 8;
