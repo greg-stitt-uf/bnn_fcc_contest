@@ -156,6 +156,10 @@ module config_manager_bnn_core_integration_tb;
 
     initial forever #5 clk = ~clk;
 
+    initial begin
+        $display("### PATCHED TB BUILD 2026-04-09 v2 ###");
+    end
+
     function automatic logic [63:0] pack8(
         input logic [7:0] b0,
         input logic [7:0] b1,
@@ -414,8 +418,8 @@ module config_manager_bnn_core_integration_tb;
             txn.weight_addr    = '0;
             txn.weight_data    = '0;
             txn.threshold_data = '0;
-            txn.neuron_idx[L0_NIDX_W-1:0]              = m_cfg_neuron_idx[L0_NIDX_W-1:0];
-            txn.threshold_data[L0_COUNT_WIDTH-1:0]     = m_cfg_threshold_data[L0_COUNT_WIDTH-1:0];
+            txn.neuron_idx[L0_NIDX_W-1:0]          = m_cfg_neuron_idx[L0_NIDX_W-1:0];
+            txn.threshold_data[L0_COUNT_WIDTH-1:0] = m_cfg_threshold_data[L0_COUNT_WIDTH-1:0];
             observed_q.push_back(txn);
         end
 
@@ -426,8 +430,8 @@ module config_manager_bnn_core_integration_tb;
             txn.weight_addr    = '0;
             txn.weight_data    = '0;
             txn.threshold_data = '0;
-            txn.neuron_idx[L1_NIDX_W-1:0]              = m_cfg_neuron_idx[L1_NIDX_W-1:0];
-            txn.threshold_data[L1_COUNT_WIDTH-1:0]     = m_cfg_threshold_data[L1_COUNT_WIDTH-1:0];
+            txn.neuron_idx[L1_NIDX_W-1:0]          = m_cfg_neuron_idx[L1_NIDX_W-1:0];
+            txn.threshold_data[L1_COUNT_WIDTH-1:0] = m_cfg_threshold_data[L1_COUNT_WIDTH-1:0];
             observed_q.push_back(txn);
         end
 
@@ -438,8 +442,8 @@ module config_manager_bnn_core_integration_tb;
             txn.weight_addr    = '0;
             txn.weight_data    = '0;
             txn.threshold_data = '0;
-            txn.neuron_idx[L2_NIDX_W-1:0]              = m_cfg_neuron_idx[L2_NIDX_W-1:0];
-            txn.threshold_data[L2_COUNT_WIDTH-1:0]     = m_cfg_threshold_data[L2_COUNT_WIDTH-1:0];
+            txn.neuron_idx[L2_NIDX_W-1:0]          = m_cfg_neuron_idx[L2_NIDX_W-1:0];
+            txn.threshold_data[L2_COUNT_WIDTH-1:0] = m_cfg_threshold_data[L2_COUNT_WIDTH-1:0];
             observed_q.push_back(txn);
         end
     end
