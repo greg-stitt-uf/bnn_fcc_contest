@@ -110,6 +110,8 @@ module bnn_fcc #(
     logic [CLASS_W-1:0]                  argmax_class_i;
     logic [L3_COUNT_W-1:0]               argmax_score_i;
 
+    logic                                infer_started_r;
+
     logic                                data_out_valid_r;
     logic [OUTPUT_BUS_WIDTH-1:0]         data_out_data_r;
 
@@ -117,7 +119,11 @@ module bnn_fcc #(
 
     always_comb begin
         data_in_ready = 1'b0;
-        if (config_done_r && (run_state_r == ST_COLLECT))
+        if (config_done_r &&
+            (run_state_r == ST_COLLECT) &&
+            !data_out_valid_r &&
+            !core_busy_i &&
+            (pixel_count_r < INPUTS))
             data_in_ready = 1'b1;
     end
 
@@ -233,6 +239,36 @@ module bnn_fcc #(
 
     always_ff @(posedge clk) begin
         if (rst) begin
+            infer_started_r <= 1'b0;
+        end else begin
+            case (run_state_r)
+                ST_COLLECT: begin
+                    infer_started_r <= 1'b0;
+                end
+
+                ST_START: begin
+                    infer_started_r <= 1'b0;
+                end
+
+                ST_RUN: begin
+                    if (core_busy_i)
+                        infer_started_r <= 1'b1;
+                end
+
+                ST_OUT: begin
+                    if (data_out_valid_r && data_out_ready)
+                        infer_started_r <= 1'b0;
+                end
+
+                default: begin
+                    infer_started_r <= 1'b0;
+                end
+            endcase
+        end
+    end
+
+    always_ff @(posedge clk) begin
+        if (rst) begin
             run_state_r      <= ST_COLLECT;
             pixel_buffer_r   <= '0;
             pixel_count_r    <= '0;
@@ -271,7 +307,7 @@ module bnn_fcc #(
                 end
 
                 ST_RUN: begin
-                    if (argmax_valid_i) begin
+                    if (infer_started_r && core_done_i && argmax_valid_i) begin
                         data_out_valid_r <= 1'b1;
                         data_out_data_r  <= '0;
                         data_out_data_r[CLASS_W-1:0] <= argmax_class_i;
