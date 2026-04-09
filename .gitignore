@@ -2,3 +2,4 @@ work/
 transcript
 *.mpf
 __pycache__
+*.mti
