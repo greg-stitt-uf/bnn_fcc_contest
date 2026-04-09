@@ -218,17 +218,22 @@ module bnn_layer #(
     logic [COUNT_WIDTH-1:0] threshold_rams[PN][NEURON_GROUPS];
 
     always_ff @(posedge clk) begin
-        if (cfg_write_en && !busy) begin
-            // Decompose the flat neuron index into NP slot and group
-            automatic int np_idx = get_np_idx(cfg_neuron_idx);
-            automatic int group_idx = get_group_idx(cfg_neuron_idx);
-            // Compute the flat weight RAM address for this neuron + beat
-            automatic int local_addr = group_idx * INPUT_BEATS + int'(cfg_weight_addr);
+    if (!busy) begin
+        automatic int np_idx;
+        automatic int group_idx;
+        automatic int local_addr;
 
-            if (cfg_threshold_write) threshold_rams[np_idx][group_idx] <= cfg_threshold_data;
-            else weight_rams[np_idx][local_addr] <= cfg_weight_data;
+        np_idx     = get_np_idx(cfg_neuron_idx);
+        group_idx  = get_group_idx(cfg_neuron_idx);
+        local_addr = group_idx * INPUT_BEATS + int'(cfg_weight_addr);
+
+        if (cfg_threshold_write && !cfg_write_en) begin
+            threshold_rams[np_idx][group_idx] <= cfg_threshold_data;
+        end else if (cfg_write_en && !cfg_threshold_write) begin
+            weight_rams[np_idx][local_addr] <= cfg_weight_data;
         end
     end
+end
 
     // =========================================================================
     // Weight address base per NP slot
