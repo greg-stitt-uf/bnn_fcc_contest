@@ -284,11 +284,12 @@ module bnn_core_tb #(
                 end
 
                 @(posedge clk iff cfg_ready);
-                cfg_write_en        <= 1'b1;
+                cfg_write_en        <= 1'b0;
                 cfg_threshold_write <= 1'b1;
                 cfg_layer_sel       <= 2'(l);
                 cfg_neuron_idx      <= CFG_NEURON_W'(n);
                 cfg_weight_addr     <= '0;
+                cfg_weight_data     <= '0;
                 cfg_threshold_data  <= mdl.thresholds[l][n];
             end
         end

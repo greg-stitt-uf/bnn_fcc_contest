@@ -206,10 +206,21 @@ module bnn_core #(
     logic l1_cfg_write_en, l2_cfg_write_en, l3_cfg_write_en;
     logic l1_cfg_thresh_write, l2_cfg_thresh_write, l3_cfg_thresh_write;
 
+    // always_comb begin
+    //     l1_cfg_write_en     = cfg_write_en && cfg_ready && (cfg_layer_sel == 2'd0);
+    //     l2_cfg_write_en     = cfg_write_en && cfg_ready && (cfg_layer_sel == 2'd1);
+    //     l3_cfg_write_en     = cfg_write_en && cfg_ready && (cfg_layer_sel == 2'd2);
+    //     l1_cfg_thresh_write = cfg_threshold_write && cfg_ready && (cfg_layer_sel == 2'd0);
+    //     l2_cfg_thresh_write = cfg_threshold_write && cfg_ready && (cfg_layer_sel == 2'd1);
+    //     l3_cfg_thresh_write = cfg_threshold_write && cfg_ready && (cfg_layer_sel == 2'd2);
+    // end
+
+    // Refactor of always comb block
     always_comb begin
-        l1_cfg_write_en     = cfg_write_en && cfg_ready && (cfg_layer_sel == 2'd0);
-        l2_cfg_write_en     = cfg_write_en && cfg_ready && (cfg_layer_sel == 2'd1);
-        l3_cfg_write_en     = cfg_write_en && cfg_ready && (cfg_layer_sel == 2'd2);
+        l1_cfg_write_en     = cfg_write_en && !cfg_threshold_write && cfg_ready && (cfg_layer_sel == 2'd0);
+        l2_cfg_write_en     = cfg_write_en && !cfg_threshold_write && cfg_ready && (cfg_layer_sel == 2'd1);
+        l3_cfg_write_en     = cfg_write_en && !cfg_threshold_write && cfg_ready && (cfg_layer_sel == 2'd2);
+
         l1_cfg_thresh_write = cfg_threshold_write && cfg_ready && (cfg_layer_sel == 2'd0);
         l2_cfg_thresh_write = cfg_threshold_write && cfg_ready && (cfg_layer_sel == 2'd1);
         l3_cfg_thresh_write = cfg_threshold_write && cfg_ready && (cfg_layer_sel == 2'd2);
