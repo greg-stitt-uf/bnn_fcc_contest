@@ -1,6 +1,6 @@
 `default_nettype none
 
-module config_manager_bnn_core_integration_tb;
+module config_manager_bnn_core_integration_patched_tb;
 
     parameter int CONFIG_BUS_WIDTH = 64;
     parameter int PW               = 8;
