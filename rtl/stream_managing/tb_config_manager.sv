@@ -37,6 +37,7 @@ module tb_config_manager #(
     logic [15:0]              bytes_per_neuron;
     logic [31:0]              total_bytes;
     logic [31:0]              reserved;
+    logic                     header_valid;
     logic [7:0]               data_out[0:7];
     logic [7:0]               data_out_valid;
     logic                     error;
@@ -62,6 +63,7 @@ module tb_config_manager #(
         .bytes_per_neuron(bytes_per_neuron),
         .total_bytes(total_bytes),
         .reserved(reserved),
+        .header_valid(header_valid),
         .data_out(data_out),
         .data_out_valid(data_out_valid),
         .error(error)
@@ -204,14 +206,14 @@ module tb_config_manager #(
             config_keep <= keeps[beat];
             config_last <= (beat == beats.size() - 1);
 
-            do begin
+            while (!config_ready) begin
                 @(posedge clk);
                 // i set it to check for total_bytes so that we don't have to wait an arbitrary number
                 // of clock cycles for the header to come out before we start checking it.
                 // of the random numbers, if the number of total_bytes is the same from the previous test
                 // to the current one, this will "fail". reviewing the waveform will show that the header is filled
                 // properly. 
-                if (!header_checked && total_bytes == expected_header.total_bytes) begin
+                if (!header_checked && header_valid) begin
                     if ((msg_type !== expected_header.msg_type) ||
                         (layer_id !== expected_header.layer_id) ||
                         (layer_inputs !== expected_header.layer_inputs) ||
@@ -253,7 +255,51 @@ module tb_config_manager #(
                         end
                     end
                 end
-            end while (!(config_valid && config_ready));
+            end
+
+            @(posedge clk iff config_ready);
+            if (!header_checked && header_valid) begin
+                if ((msg_type !== expected_header.msg_type) ||
+                    (layer_id !== expected_header.layer_id) ||
+                    (layer_inputs !== expected_header.layer_inputs) ||
+                    (num_neurons !== expected_header.num_neurons) ||
+                    (bytes_per_neuron !== expected_header.bytes_per_neuron) ||
+                    (total_bytes !== expected_header.total_bytes) ||
+                    (reserved !== expected_header.reserved)) begin
+                    $display("FAIL time=%0t test=%0d header mismatch", $time, test_id);
+                    $display("  exp msg_type=%0h layer_id=%0h layer_inputs=%0h num_neurons=%0h bytes_per_neuron=%0h total_bytes=%0h reserved=%0h",
+                             expected_header.msg_type, expected_header.layer_id, expected_header.layer_inputs,
+                             expected_header.num_neurons, expected_header.bytes_per_neuron, expected_header.total_bytes,
+                             expected_header.reserved);
+                    test_failed = 1'b1;
+                end
+                header_checked = 1'b1;
+            end
+
+            if (data_out_valid != '0) begin
+                for (int lane = 0; lane < BYTE_LANES; lane++) begin
+                    bit expected_valid;
+                    bit [7:0] expected_byte;
+
+                    expected_valid = (expected_payload_idx < expected_payload.size());
+                    expected_byte = expected_valid ? expected_payload[expected_payload_idx] : 8'h00;
+
+                    if (data_out_valid[lane] !== expected_valid) begin
+                        $display("FAIL time=%0t test=%0d lane=%0d valid mismatch exp=%0b act=%0b payload_idx=%0d",
+                                 $time, test_id, lane, expected_valid, data_out_valid[lane], expected_payload_idx);
+                        test_failed = 1'b1;
+                    end
+
+                    if (expected_valid) begin
+                        if (data_out[lane] !== expected_byte) begin
+                            $display("FAIL time=%0t test=%0d lane=%0d data mismatch exp=0x%0h act=0x%0h payload_idx=%0d",
+                                     $time, test_id, lane, expected_byte, data_out[lane], expected_payload_idx);
+                            test_failed = 1'b1;
+                        end
+                        expected_payload_idx++;
+                    end
+                end
+            end
         end
 
         @(negedge clk);

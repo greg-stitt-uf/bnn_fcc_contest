@@ -18,6 +18,7 @@ module config_manager #(
     output logic [15:0]              bytes_per_neuron,
     output logic [31:0]              total_bytes,
     output logic [31:0]              reserved,
+    output logic                     header_valid,
 
     // outputs of data
     output logic [7:0]               data_out[0:7],
@@ -43,6 +44,7 @@ module config_manager #(
     logic [15:0] bytes_per_neuron_r, bytes_per_neuron_r_next;
     logic [31:0] total_bytes_r, total_bytes_r_next;
     logic [31:0] reserved_r, reserved_r_next;
+    logic       header_valid_r, header_valid_next;
 
     // track number of payload bytes received to compare against total_bytes in header
     logic [31:0] payload_bytes_received_r, payload_bytes_received_next;
@@ -92,6 +94,7 @@ module config_manager #(
     assign bytes_per_neuron = bytes_per_neuron_r;
     assign total_bytes = total_bytes_r;
     assign reserved = reserved_r;
+    assign header_valid = header_valid_r;
     assign error = error_r;
     assign data_out = data_out_r;
     assign data_out_valid = data_out_valid_r;
@@ -117,11 +120,13 @@ module config_manager #(
         data_out_next = '{default: '0};
         data_out_valid_next = '0;
         shift_out_ready = 1'b0;
+        header_valid_next = 1'b0;
 
         case (curr_state)
             IDLE: begin
                 payload_bytes_received_next = '0;
                 error_next = 1'b0;
+                header_valid_next = 1'b0;
 
                 if (shift_out_valid) begin
                     // read the first beat of the header, then move to next state where second header beat is defined
@@ -134,6 +139,7 @@ module config_manager #(
             HEADER: begin
                 if (shift_out_valid) begin
                     shift_out_ready = 1'b1;
+                    header_valid_next = 1'b1;
                     // after reading in second header beat, parse the header and move to payload state
                     // remember, the shift register handles the keep, so we don't need to validate here
                     msg_type_r_next = header_word0_r[7:0];
@@ -190,7 +196,7 @@ module config_manager #(
     end
 
     // state mover and registered stuff
-    always_ff @(posedge clk or posedge rst) begin
+    always_ff @(posedge clk) begin
         if (rst) begin
             curr_state <= IDLE;
             msg_type_r <= '0;
@@ -205,6 +211,7 @@ module config_manager #(
             header_word0_r <= '0;
             data_out_r <= '{default: '0};
             data_out_valid_r <= '{default: 1'b0};
+            header_valid_r <= 1'b0;
         end else begin
             // had to move this out of comb logic with the help of claude. 
             // i wrote most of this though don't get it twisted
@@ -255,6 +262,7 @@ module config_manager #(
             header_word0_r <= header_word0_next;
             data_out_r <= data_out_next;
             data_out_valid_r <= data_out_valid_next;
+            header_valid_r <= header_valid_next;
         end
     end
 

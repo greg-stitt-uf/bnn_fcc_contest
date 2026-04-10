@@ -36,12 +36,38 @@ module bnn_fcc #(
     output logic                          data_out_last
 );
 
-    typedef enum {
-        LOAD_MODEL,
-        RUN_INFERENCE
-    } operation_t;
+    // current header being read in
+    typedef struct packed {
+        logic [7:0]               msg_type;
+        logic [7:0]               layer_id;
+        logic [15:0]              layer_inputs;
+        logic [15:0]              num_neurons;
+        logic [15:0]              bytes_per_neuron;
+        logic [31:0]              total_bytes;
+        logic [31:0]              reserved;
+    } header_t;
+    header_t cfg_header_out;
+    logic cfg_header_out_valid;
 
-    operation_t current_operation;
+    logic [INPUT_BUS_WIDTH-1:0] cfg_data_out;
+    config_manager #(
+        .CONFIG_BUS_WIDTH(CONFIG_BUS_WIDTH)
+    ) config_manager_inst (
+        .clk(clk),
+        .rst(rst),
+        .config_valid(config_valid),
+        .config_ready(config_ready),
+        .config_data(config_data),
+        .config_keep(config_keep),
+        .config_last(config_last),
+        .msg_type(cfg_header_out.msg_type),
+        .layer_id(cfg_header_out.layer_id),
+        .layer_inputs(cfg_header_out.layer_inputs),
+        .num_neurons(cfg_header_out.num_neurons),
+        .bytes_per_neuron(cfg_header_out.bytes_per_neuron),
+        .total_bytes(cfg_header_out.total_bytes),
+        .reserved(cfg_header_out.reserved)
+    );
     
 
 
