@@ -8,7 +8,6 @@ module layer_bank #(
 
     input  logic [PW-1:0]          x,
     input  logic                   valid_in,
-    input  logic                   last,
 
     input  logic [PN-1:0]          np_active,
 
@@ -75,7 +74,6 @@ module layer_bank #(
 
                 .x          (x),
                 .valid_in   (valid_in & np_active[i]),
-                .last       (last & np_active[i]),
 
                 .cfg_done   (cfg_done_np[i]),
                 .cfg_w_we   (cfg_w_we_np[i]),

@@ -1,12 +1,12 @@
 module neuron_top #(
     parameter int PW = 16,
-    parameter int ADDR_W = 10
+    parameter int ADDR_W = 10,
+    parameter int INPUTS_PER_NEURON = 784
 )(
     input logic           clk,
     input logic           rst,
     input logic [PW-1:0]  x,
 
-    input logic           last,
     input logic           valid_in,
 
     input logic           cfg_done,
@@ -28,10 +28,12 @@ module neuron_top #(
     logic [ADDR_W-1:0]     thres_read_addr;
     logic                  w_read_en;
     logic [ADDR_W-1:0]     w_read_addr;
+    logic                  last;
 
     neuron_top_cont #(
         .PW(PW),
-        .ADDR_W(ADDR_W)
+        .ADDR_W(ADDR_W),
+        .INPUTS_PER_NEURON(INPUTS_PER_NEURON)
     ) neuron_top_cont_inst (
         .clk(clk),
         .rst(rst),
