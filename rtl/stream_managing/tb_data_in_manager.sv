@@ -3,7 +3,7 @@
 module tb_data_in_manager #(
     parameter int INPUT_DATA_WIDTH = 8,
     parameter int INPUT_BUS_WIDTH = 64,
-    parameter int NUM_TESTS = 25,
+    parameter int NUM_TESTS = 250,
     parameter int MIN_BEATS = 1,
     parameter int MAX_BEATS = 6
 );

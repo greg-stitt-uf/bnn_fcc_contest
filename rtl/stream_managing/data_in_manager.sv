@@ -22,7 +22,14 @@ module data_in_manager#(
     output logic                          img_data_out_error // if anything's wrong with the input stream, we want to be able to flag that to the neurons so they can handle it appropriately
 );
 
-    logic [(INPUT_DATA_WIDTH*2)-1:0] img_data_out_r[INPUT_BUS_WIDTH/16], img_data_out_next[INPUT_BUS_WIDTH/16];
+
+    // struct to hold two pixels of data. readable syntax
+    typedef struct packed {
+        logic [INPUT_DATA_WIDTH-1:0] pixel1;
+        logic [INPUT_DATA_WIDTH-1:0] pixel0;
+    } data_t;
+
+    data_t img_data_out_r[INPUT_BUS_WIDTH/16], img_data_out_next[INPUT_BUS_WIDTH/16];
     logic [INPUT_BUS_WIDTH/16-1:0] img_data_out_valid_r, img_data_out_valid_next;
     logic img_data_out_last_r, img_data_out_last_next;
     logic img_data_out_error_r, img_data_out_error_next;
@@ -31,12 +38,6 @@ module data_in_manager#(
     assign img_data_out_valid = img_data_out_valid_r;
     assign img_data_out_last = img_data_out_last_r;
     assign img_data_out_error = img_data_out_error_r;
-
-    // struct to hold two pixels of data. readable syntax
-    typedef struct packed {
-        logic [INPUT_DATA_WIDTH-1:0] pixel0;
-        logic [INPUT_DATA_WIDTH-1:0] pixel1;
-    } data_t;
 
     // states to track status of data_in stream receiver
     typedef enum {
@@ -72,8 +73,8 @@ module data_in_manager#(
         next_state = curr_state;
         shift_out_ready = 1'b0;
         img_data_out_next = img_data_out_r;
-        img_data_out_valid_next = img_data_out_valid_r;
-        img_data_out_last_next = img_data_out_last_r;
+        img_data_out_valid_next = '0;
+        img_data_out_last_next = 1'b0;
         img_data_out_error_next = img_data_out_error_r;
         case (curr_state)
             IDLE: begin
@@ -82,26 +83,30 @@ module data_in_manager#(
                     shift_out_ready = 1'b1;
                     // read first beat since it's valid, so we'll have the first 8 pixels
                     for (int i = 0; i < INPUT_BUS_WIDTH/16; i++) begin
-                        img_data_out_next[i] = shift_out_data[i*16 +: 16];
-                        img_data_out_valid_next[i] = shift_out_valid;
+                        img_data_out_next[i].pixel0 = shift_out_data[i*16 +: 8];
+                        img_data_out_next[i].pixel1 = shift_out_data[i*16+8 +: 8];
+                        img_data_out_valid_next[i] = shift_out_keep[i*2] | shift_out_keep[i*2 + 1];
                     end
-                    next_state = RECEIVING;
+                    img_data_out_last_next = shift_out_last;
+                    next_state = shift_out_last ? IDLE : RECEIVING;
                 end
             end
             RECEIVING: begin
                 if (shift_out_valid && !shift_out_last) begin
                     shift_out_ready = 1'b1;
                     for (int i = 0; i < INPUT_BUS_WIDTH/16; i++) begin
-                        img_data_out_next[i] = shift_out_data[i*16 +: 16];
-                        img_data_out_valid_next[i] = shift_out_valid;
+                        img_data_out_next[i].pixel0 = shift_out_data[i*16 +: 8];
+                        img_data_out_next[i].pixel1 = shift_out_data[i*16+8 +: 8];
+                        img_data_out_valid_next[i] = shift_out_keep[i*2] | shift_out_keep[i*2 + 1];
                     end
                     img_data_out_last_next = shift_out_last;
                     next_state = RECEIVING;
                 end else if (shift_out_valid && shift_out_last) begin
                     shift_out_ready = 1'b1;
                     for (int i = 0; i < INPUT_BUS_WIDTH/16; i++) begin
-                        img_data_out_next[i] = shift_out_data[i*16 +: 16];
-                        img_data_out_valid_next[i] = shift_out_valid;
+                        img_data_out_next[i].pixel0 = shift_out_data[i*16 +: 8];
+                        img_data_out_next[i].pixel1 = shift_out_data[i*16+8 +: 8];
+                        img_data_out_valid_next[i] = shift_out_keep[i*2] | shift_out_keep[i*2 + 1];
                     end
                     img_data_out_last_next = shift_out_last;
                     next_state = IDLE;
