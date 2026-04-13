@@ -22,6 +22,7 @@ module bnn #(
         logic data_out_valid
 );
 
+    logic layer1_out [785:0];
 // 784 then 256 (layer 1) then 256 (layer 2) then 10 (layer 3)
 
     layer #(
@@ -31,14 +32,14 @@ module bnn #(
         .POPCOUNT_WIDTH(32)
     ) L1 (
         .clk(clk),
-        .x(),
+        .x(data_in),
         .rst(rst),
         .en(en),
         .valid_in(data_in_valid),
         .last(),
-        .w(),
-        .out(),
-        .popcount_outs(),
+        .w(3),
+        .out(layer1_out),
+        .popcount_outs(), // Don't need except in output layer
         .valid_outs()
     );
 
@@ -49,14 +50,14 @@ module bnn #(
         .POPCOUNT_WIDTH(32)
     ) L2 (
         .clk(clk),
-        .x(),
+        .x(layer1_out),
         .rst(rst),
         .en(en),
         .valid_in(data_in_valid),
         .last(),
-        .w(),
-        .out(),
-        .popcount_outs(),
+        .w(3),
+        .out(layer2_out),
+        .popcount_outs(), // Don't need except in output layer
         .valid_outs()
     );
 
@@ -67,12 +68,12 @@ module bnn #(
         .POPCOUNT_WIDTH(32)
     ) L_OUT (
         .clk(clk),
-        .x(),
+        .x(layer2_out),
         .rst(rst),
         .en(en),
         .valid_in(data_in_valid),
         .last(),
-        .w(),
+        .w(3),
         .out(),
         .popcount_outs(),
         .valid_outs()

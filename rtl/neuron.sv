@@ -82,7 +82,7 @@
 module neuron #(
     parameter NUM_WEIGHTS = 4,
     parameter NUM_INPUTS = 4, 
-    parameter int THRESHOLD_BITS = 4,
+    parameter int THRESHOLD = 4,
     parameter int POPCOUNT_WIDTH = 32
 )
 (
@@ -102,6 +102,7 @@ module neuron #(
     logic [$clog2(NUM_WEIGHTS+1)-1:0] count_ones_out_r;
     logic [POPCOUNT_WIDTH-1:0] accum_r;
     logic [POPCOUNT_WIDTH-1:0] accum_next;
+    logic [POPCOUNT_WIDTH-1:0] popcount_out_r;
     
     // Status Registers
     logic valid_r1, valid_out_r;
@@ -122,9 +123,10 @@ module neuron #(
             y_r              <= '0; 
             valid_r1 <= 1'b0;
             valid_out_r <= 1'b0; 
-            last_r1 <= 1'b0;  
+            last_r1 <= 1'b0; 
+            popcount_out_r   <= '0; 
         end else if (en) begin 
-
+            valid_out_r <= 1'b0;
             /* Stage 1*/ 
             count_ones_out_r <= $countones(x ~^ w);
             valid_r1   <= valid_in; 
@@ -132,9 +134,10 @@ module neuron #(
 
             /* Stage 2 */
             if(last_r1 && valid_r1) begin
-                y_r     <= (accum_next >= THRESHOLD_BITS);
+                y_r     <= (accum_next >= THRESHOLD);
                 valid_out_r <= 1'b1;
                 accum_r <= '0;
+                popcount_out_r <= accum_next;
             end else begin
                 y_r <= 1'b0;
                 accum_r <= accum_next;
@@ -144,6 +147,6 @@ module neuron #(
 
     assign y            = y_r;
     assign valid_out    = valid_out_r;
-    assign popcount_out = accum_r;
+    assign popcount_out = popcount_out_r;
 
 endmodule

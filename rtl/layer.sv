@@ -24,7 +24,7 @@ module layer #(
             neuron #(
                 .NUM_WEIGHTS(BEAT_WIDTH),
                 .NUM_INPUTS(BEAT_WIDTH), 
-                .THRESHOLD_BITS(3), // abritary for now
+                .THRESHOLD(3), // abritary for now
                 .POPCOUNT_WIDTH(POPCOUNT_WIDTH)
             ) N (
                 .clk(clk),
